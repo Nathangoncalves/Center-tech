@@ -1,0 +1,15 @@
+.fundo_inicio {
+    position: relative;
+    height: 100vh;
+    background-image: url("assets/images/FundoInicio.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.fundo_inicio::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.60);
+}
