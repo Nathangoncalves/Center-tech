@@ -1,61 +1,59 @@
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
+import {
+    AppBar, Toolbar, Typography, Box, Stack, Button, IconButton, Menu, MenuItem, Tooltip,
+} from "@mui/material";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
 
-export default function Header() {
+export default function Header({ mode, setMode }) {
+    const [anchor, setAnchor] = useState(null);
+    const open = Boolean(anchor);
+
     return (
-        <AppBar
-        position="sticky"
-        elevation={0}
-        color="transparente"
-        sx={{
-            backdropFilter: "blur(8px)",
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-            py: 1,
-        }}
-        >
-            <Toolbar sx={{ justifyContent: "space-between" }}>
-                {/*  Nome ou logotipo */}
-                <Typography variant="h6" component="div" sx={{
-                    fontWeight: "bold" }}>
-                        Nathan Gonçalves
-                        </Typography>
+    <AppBar position="sticky" color="transparent" elevation={0} sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Toolbar sx={{ minHeight: 72 }}>
+        <Typography variant="h6" sx={{ fontWeight: 900 }}>
+            Centertech <Box component="span" sx={{ color: "primary.main" }}>Sorteios</Box>
+        </Typography>
 
-                {/* Links de navegação */}
-                <Box sx={{ display: "flex", gap: 3, alignItems: 
-                    "center" }}>
-                        <Button color="inherit" component={Link} to="/" sx={{
-                            textTransform: "none" }}>
-                            Início
-                        </Button>
-                        <Button color="inherit" component={Link} to="/sobre" sx={{
-                            textTransform: "none" }}>
-                                Sobre 
-                        </Button>
-                        <Button color="inherit" component={Link} to="/contato" sx={{
-                            textTransform: "none" }}>
-                                Contato 
-                        </Button>
+        <Box sx={{ flexGrow: 1 }} />
 
-                        {/* Botão de currículo */}
-                        <Button 
-                        variant="contained"
-                        href="/curriculo.pdf"
-                        target="_blank"
-                        sx={{
-                            textTransform: "none",
-                            fontWeight: "bold",
-                            "&:hover": {
-                                bgcolor: "#e53e3e",
-                            },
-                        }}>
-                            Currículo
-                        </Button>
-                    </Box>
-                </Toolbar>
-        </AppBar>
+        <Stack direction="row" spacing={1} alignItems="center">
+            <Button component={RouterLink} to="/#sorteios" variant="text">Sorteios</Button>
+            <Button component={RouterLink} to="/#ganhadores" variant="text">Ganhadores</Button>
+            <Button component={RouterLink} to="/#regulamento" variant="text">Regulamento</Button>
+            <Button component={RouterLink} to="/#contato" variant="text">Contato</Button>
+
+            <Tooltip title="Tema">
+            <IconButton onClick={() => setMode(mode === "dark" ? "light" : "dark")}>
+                {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
+            </Tooltip>
+
+          {/* Conta */}
+            <Tooltip title="Login / Cadastro">
+            <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
+                <AccountCircleIcon />
+            </IconButton>
+            </Tooltip>
+            <Menu
+            anchorEl={anchor}
+            open={open}
+            onClose={() => setAnchor(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+            <MenuItem component={RouterLink} to="/cadastro" onClick={() => setAnchor(null)}>
+                Criar Conta (Participante)
+            </MenuItem>
+            <MenuItem component={RouterLink} to="/gestor" onClick={() => setAnchor(null)}>
+                Fazer Login (Gestor)
+            </MenuItem>
+            </Menu>
+        </Stack>
+        </Toolbar>
+    </AppBar>
     );
 }
