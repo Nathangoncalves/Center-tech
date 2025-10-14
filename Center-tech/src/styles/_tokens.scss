@@ -1,0 +1,19 @@
+$color-background-dark: #0f1115;
+$color-surface-dark: #11141c;
+$color-text-light: #e5e7eb;
+$color-text-muted: #9ca3af;
+$color-accent: #38bdf8;
+$color-accent-strong: #f97316;
+
+$container-max-width: 1180px;
+$border-radius-lg: 1.5rem;
+
+$font-primary: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+$font-display: "Inter Tight", $font-primary;
+
+@mixin glass-panel($alpha: 0.65) {
+    background: rgba(17, 20, 28, $alpha);
+    backdrop-filter: saturate(180%) blur(16px);
+    border: 1px solid rgba(255, 255, 255, $alpha * 0.08);
+    border-radius: $border-radius-lg;
+}

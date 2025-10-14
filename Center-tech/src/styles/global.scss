@@ -1,0 +1,46 @@
+@use "sass:color";
+@use "./_tokens.scss" as tokens;
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    height: 100%;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: tokens.$font-primary;
+    background: radial-gradient(circle at top right, color.scale(tokens.$color-accent, $alpha: -50%), transparent),
+        radial-gradient(circle at bottom left, color.scale(tokens.$color-accent-strong, $alpha: -60%), transparent),
+        tokens.$color-background-dark;
+    color: tokens.$color-text-light;
+    line-height: 1.5;
+}
+
+:root {
+    color-scheme: light;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+}
+
+.glass-panel {
+    @include tokens.glass-panel(0.75);
+}
