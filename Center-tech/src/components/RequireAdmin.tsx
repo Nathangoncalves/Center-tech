@@ -1,9 +1,18 @@
 import { Navigate, useLocation } from "react-router-dom";
-import useAuth from "../hooks/useAuth";
+import type { ReactNode } from "react";
+import { getAuthToken } from "../services";
 
-export default function RequireAdmin({ children }: { children: JSX.Element }) {
-    const { authed } = useAuth();
-    const loc = useLocation();
-    if (!authed) return <Navigate to="/login" state={{ from: loc }} replace />;
-    return children;
+interface RequireAdminProps {
+    children: ReactNode;
+}
+
+export default function RequireAdmin({ children }: RequireAdminProps) {
+    const token = getAuthToken();
+    const location = useLocation();
+
+    if (!token) {
+        return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    }
+
+    return <>{children}</>;
 }

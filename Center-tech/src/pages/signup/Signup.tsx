@@ -1,8 +1,8 @@
 import { Box, Container, Paper, Stack, Typography } from "@mui/material";
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import useNgTheme from "../hooks/useNgTheme";
-import Header from "../components/Header";
-import SignupForm from "../components/SignupForm";
+import useNgTheme from "../../hooks/useNgTheme";
+import Header from "../../components/Header";
+import SignupForm from "../../components/SignupForm";
 
 export default function Signup() {
     const { theme, mode, setMode } = useNgTheme();
