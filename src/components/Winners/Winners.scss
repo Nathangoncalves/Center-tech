@@ -1,0 +1,24 @@
+.winners {
+    position: relative;
+    overflow: hidden;
+
+    &__header {
+        margin-bottom: 2rem;
+    }
+
+    &__grid {
+        align-items: stretch;
+    }
+
+    &__card {
+        height: 100%;
+    }
+
+    &__card-content {
+        height: 100%;
+    }
+
+    &__card-header {
+        font-weight: 800;
+    }
+}

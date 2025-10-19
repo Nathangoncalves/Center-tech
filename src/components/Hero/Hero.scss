@@ -1,0 +1,25 @@
+.hero {
+    position: relative;
+    padding-inline: 0;
+
+    &__content {
+        max-width: 900px;
+    }
+
+    &__badge {
+        width: fit-content;
+    }
+
+    &__title {
+        font-weight: 900;
+        line-height: 1.05;
+    }
+
+    &__subtitle {
+        max-width: 720px;
+    }
+
+    &__actions {
+        flex-wrap: wrap;
+    }
+}

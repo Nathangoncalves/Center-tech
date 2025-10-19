@@ -218,7 +218,7 @@ export default function HomePage() {
                         <Typography color="text.secondary">Me mande um ou e vamos discutir escopo, prazos e impacto.</Typography>
                         <Stack direction={{ xs: "column", sm: "row"}} spacing={2} justifyContent="center">
                             <Button variant="contained" size="large" href="malito:nathanogoncalves.ti@gmail.com" startIcon={<EmailIcon />}>Enviar e-mail</Button>
-                            <Button variant="outlined" size="large" href="https://wa.me/5561999840804" target="_blank" rel="noreferrer" startIcon={<WhatsAppIcon />}>WhatsApp</Button>
+                            <Button variant="outlined" size="large" href="https://wa.me/5561985979700" target="_blank" rel="noreferrer" startIcon={<WhatsAppIcon />}>WhatsApp</Button>
                         </Stack>
                     </Stack>
                 </Container>
