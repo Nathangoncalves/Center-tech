@@ -3,6 +3,7 @@ import Home from "@/pages/Home";
 import Signup from "@/pages/Signup";
 import Admin from "@/pages/Admin";
 import Login from "@/pages/Login";
+import ParticipantDashboard from "@/pages/Participant";
 import RequireAdmin from "@/components/RequireAdmin";
 
 export default function App() {
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/cadastro" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/participante" element={<ParticipantDashboard />} />
         <Route
             path="/gestor"
             element={(

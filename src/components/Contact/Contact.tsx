@@ -1,9 +1,5 @@
-import { Box, Button, Container, Paper, Stack, Typography } from "@mui/material";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import { Box, Container, Paper, Stack, Typography } from "@mui/material";
 import "./Contact.scss";
-
-const WHATSAPP_NUMBER = "5561985979700";
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 
 export default function Contact() {
     return (
@@ -11,7 +7,10 @@ export default function Contact() {
             id="contato"
             className="contact"
             sx={{
-                py: 8,
+                pt: { xs: 10, md: 12 },
+                pb: { xs: 10, md: 12 },
+                mt: { xs: 6, md: 8 },
+                scrollMarginTop: "96px",
                 background: (theme) =>
                     theme.palette.mode === "dark"
                         ? "radial-gradient(circle at top right, rgba(56,189,248,0.35), transparent 55%), radial-gradient(circle at bottom left, rgba(249,115,22,0.28), transparent 60%), #0f1115"
@@ -42,21 +41,9 @@ export default function Contact() {
                                 Fale com a Centertech
                             </Typography>
                             <Typography color="text.secondary">
-                                Tire dúvidas, confirme pagamentos ou acompanhe seus sorteios pelo WhatsApp oficial.
+                                Tire dúvidas, confirme pagamentos ou acompanhe seus sorteios pelo nosso atendimento exclusivo.
                             </Typography>
                         </Stack>
-
-                        <Button
-                            className="contact__cta"
-                            variant="contained"
-                            size="large"
-                            startIcon={<WhatsAppIcon />}
-                            href={WHATSAPP_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            Falar no WhatsApp
-                        </Button>
                     </Stack>
                 </Paper>
             </Container>

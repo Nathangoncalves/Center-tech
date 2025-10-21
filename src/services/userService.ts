@@ -1,5 +1,5 @@
 import { http } from "./http";
-import type { User, UserRole } from "../types";
+import type { Identifier, User, UserRole } from "@/types";
 
 export interface CreateUserInput {
     nome: string;
@@ -12,14 +12,16 @@ export interface CreateUserInput {
 }
 
 export interface UpdateUserInput extends Partial<CreateUserInput> {
-    uuid: string;
+    id: Identifier;
 }
 
 export const userService = {
     list: () => http.get<User[]>("/user"),
-    get: (uuid: string) => http.get<User>(`/user/${uuid}`),
+    me: () => http.get<User>("/user/me"),
+    get: (id: Identifier) => http.get<User>(`/user/${id}`),
     create: ({ role = "CLIENTE", ...payload }: CreateUserInput) =>
         http.post<User>("/user/criar", payload, { params: { role: role.toLowerCase() } }),
-    update: (payload: UpdateUserInput) => http.post<User>("/user/update", payload),
-    remove: (uuid: string) => http.post<void>(`/user/delete/${uuid}`),
+    update: ({ id, ...payload }: UpdateUserInput) =>
+        http.post<User>("/user/update", { id, ...payload }),
+    remove: (id: Identifier) => http.post<void>(`/user/delete/${id}`),
 };

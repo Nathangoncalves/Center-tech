@@ -1,5 +1,6 @@
-import { Box, Card, CardContent, Container, Grid, Stack, Typography, useTheme } from "@mui/material";
+import { Box, Card, CardContent, Container, Grid, Stack, Typography, useTheme, Chip } from "@mui/material";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import CelebrationIcon from "@mui/icons-material/Celebration";
 import "./Winners.scss";
 import { winners } from "@/Data/winners";
 
@@ -14,9 +15,12 @@ export default function Winners() {
         id="ganhadores"
         className="winners"
         sx={{
-            py: 8,
-            borderTop: 1,
-            borderColor: "divider",
+            minHeight: "85vh",
+            display: "flex",
+            alignItems: "center",
+            pt: { xs: 6, md: 8 },
+            pb: { xs: 9, md: 10 },
+            mt: { xs: 3, md: 4 },
             position: "relative",
             overflow: "hidden",
             bgcolor: isDark ? "transparent" : "background.paper",
@@ -26,9 +30,19 @@ export default function Winners() {
         }}
     >
         <Container maxWidth="lg">
-        <Stack className="winners__header" spacing={1} sx={{ mb: 3 }}>
-            <Typography variant="overline" color="text.secondary">Transparência</Typography>
-            <Typography variant="h4" fontWeight={900}>Ganhadores recentes</Typography>
+        <Stack className="winners__header" spacing={2} sx={{ mb: 5 }}>
+            <Chip
+                icon={<CelebrationIcon fontSize="small" />}
+                label="Transparência garantida"
+                variant="outlined"
+                className="winners__badge"
+            />
+            <Stack spacing={1}>
+                <Typography variant="h4" fontWeight={900}>Ganhadores recentes</Typography>
+                <Typography color="text.secondary" maxWidth={520}>
+                    Conheça quem já levou os prêmios da Centertech. Toda semana um novo vencedor é celebrado.
+                </Typography>
+            </Stack>
         </Stack>
 
         <Grid className="winners__grid" container spacing={3}>

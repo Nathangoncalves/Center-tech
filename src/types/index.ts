@@ -37,7 +37,7 @@ export const TipoMidia = {
 export type TipoMidia = typeof TipoMidia[keyof typeof TipoMidia];
 
 export interface BaseEntity {
-    uuid: Identifier;
+    id: Identifier;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -55,14 +55,21 @@ export interface User extends BaseEntity {
 export interface Item extends BaseEntity {
     nome: string;
     descricao: string;
-    valor: number;
-    imageUrl: string;
+    imagemUrl: string;
+    valorEstimado: number;
 }
 
 export interface Midia extends BaseEntity {
     url: string;
     tipo: TipoMidia;
-    sorteio?: Pick<Sorteio, "uuid" | "titulo">;
+}
+
+export interface SorteioSummary extends BaseEntity {
+    titulo: string;
+    status: SorteioStatus;
+    precoBilhete: number;
+    qtdTotalBilhetes: number;
+    qtdVendidos: number;
 }
 
 export interface Sorteio extends BaseEntity {
@@ -76,7 +83,7 @@ export interface Sorteio extends BaseEntity {
     qtdVendidos: number;
     item?: Item | null;
     midias?: Midia[];
-    vencedor?: Pick<User, "uuid" | "nome" | "email"> | null;
+    vencedor?: Pick<User, "id" | "nome" | "email"> | null;
     bilhetes?: Bilhete[];
 }
 
@@ -84,8 +91,8 @@ export interface Bilhete extends BaseEntity {
     numero: number;
     dataCompra: string;
     pago: boolean;
-    user?: Pick<User, "uuid" | "nome" | "email">;
-    sorteio?: Pick<Sorteio, "uuid" | "titulo">;
+    user?: Pick<User, "id" | "nome" | "email">;
+    sorteio?: SorteioSummary;
 }
 
 export interface Transacao extends BaseEntity {
@@ -94,9 +101,9 @@ export interface Transacao extends BaseEntity {
     metodoPagamento: MetodoPagamento;
     referencia?: string;
     data: string;
-    user?: Pick<User, "uuid" | "nome" | "email">;
-    sorteio?: Pick<Sorteio, "uuid" | "titulo">;
-    bilhete?: Pick<Bilhete, "uuid" | "numero">;
+    user?: Pick<User, "id" | "nome" | "email">;
+    sorteio?: Pick<Sorteio, "id" | "titulo">;
+    bilhete?: Pick<Bilhete, "id" | "numero">;
 }
 
 export interface DashboardResumo {
@@ -105,12 +112,4 @@ export interface DashboardResumo {
     totalBilhetes: number;
     totalTransacoes: number;
     faturamentoBruto: number;
-}
-
-export interface SignupPayload {
-    nome: string;
-    email: string;
-    telefone: string;
-    cpf?: string;
-    aceitouTermos: boolean;
 }

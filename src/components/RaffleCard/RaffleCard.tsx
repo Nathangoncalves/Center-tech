@@ -23,7 +23,7 @@ const money = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency",
 
 function resolveImage(sorteio: Sorteio): string {
     if (sorteio.midias?.length) return sorteio.midias[0]!.url;
-    if (sorteio.item?.imageUrl) return sorteio.item.imageUrl;
+    if (sorteio.item?.imagemUrl) return sorteio.item.imagemUrl;
     return "/assets/image.png";
 }
 
@@ -34,7 +34,12 @@ const statusLabels: Record<Sorteio["status"], string> = {
     FINALIZADO: "Finalizado",
 };
 
-export default function RaffleCard({ sorteio }: { sorteio: Sorteio }) {
+interface RaffleCardProps {
+    sorteio: Sorteio;
+    onParticipar?: (sorteio: Sorteio) => void;
+}
+
+export default function RaffleCard({ sorteio, onParticipar }: RaffleCardProps) {
     const navigate = useNavigate();
 
     const progress = useMemo(() => {
@@ -47,7 +52,10 @@ export default function RaffleCard({ sorteio }: { sorteio: Sorteio }) {
 
     return (
         <Card className="raffle-card" sx={{ overflow: "hidden" }}>
-            <CardActionArea className="raffle-card__action" onClick={() => navigate("/cadastro")}>
+            <CardActionArea
+                className="raffle-card__action"
+                onClick={() => (onParticipar ? onParticipar(sorteio) : navigate("/cadastro"))}
+            >
                 <Box className="raffle-card__media-wrapper" sx={{ position: "relative" }}>
                     <CardMedia
                         component="img"
@@ -91,7 +99,12 @@ export default function RaffleCard({ sorteio }: { sorteio: Sorteio }) {
                                 </Typography>
                             </Stack>
                         </Box>
-                        <Button fullWidth variant="contained" sx={{ mt: 0.5 }} onClick={() => navigate("/cadastro")}>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            sx={{ mt: 0.5 }}
+                            onClick={() => (onParticipar ? onParticipar(sorteio) : navigate("/cadastro"))}
+                        >
                             Participar
                         </Button>
                     </Stack>

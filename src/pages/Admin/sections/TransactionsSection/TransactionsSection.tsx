@@ -81,7 +81,7 @@ export default function TransactionsSection() {
                 </TableHead>
                 <TableBody>
                     {transactions.map((transaction) => (
-                        <TableRow key={transaction.uuid}>
+                        <TableRow key={transaction.id}>
                             <TableCell>
                                 <Chip
                                     label={tipoLabel[transaction.tipo]}

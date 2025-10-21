@@ -4,6 +4,4 @@ export * from "./http";
 export * from "./userService";
 export * from "./sorteioService";
 export * from "./ticketService";
-export * from "./itemService";
-export * from "./mediaService";
 export * from "./transactionService";

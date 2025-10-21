@@ -2,13 +2,22 @@ import { useNavigate } from "react-router-dom";
 import { Box, Button, Chip, Container, Stack, Typography } from "@mui/material";
 import "./Hero.scss";
 
-export default function Hero() {
+type HeroProps = {
+    participantsCount?: number;
+};
+
+export default function Hero({ participantsCount }: HeroProps) {
     const navigate = useNavigate();
     return (
     <Box component="section" className="hero" sx={{ py: { xs: 6, md: 10 } }}>
         <Container maxWidth="lg">
         <Stack className="hero__content" spacing={3}>
-            <Chip className="hero__badge" label="Sorteios verificados • Loteria Federal" variant="outlined" sx={{ alignSelf: "flex-start" }} />
+            <Chip
+                className="hero__badge"
+                label={`Sorteios verificados • ${participantsCount !== undefined ? `${participantsCount} participantes` : "Loteria Federal"}`}
+                variant="outlined"
+                sx={{ alignSelf: "flex-start" }}
+            />
             <Typography variant="h2" className="hero__title" sx={{ fontWeight: 900, lineHeight: 1.05, maxWidth: 900 }}>
             Prêmios que você quer, <br /> com preço justo.
             </Typography>

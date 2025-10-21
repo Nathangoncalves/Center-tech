@@ -113,7 +113,7 @@ export default function RafflesSection() {
                                 ? Math.round((raffle.qtdVendidos / raffle.qtdTotalBilhetes) * 100)
                                 : 0;
                             return (
-                                <TableRow key={raffle.uuid}>
+                                <TableRow key={raffle.id}>
                                     <TableCell>
                                         <Typography fontWeight={600}>{raffle.titulo}</Typography>
                                         <Typography variant="body2" color="text.secondary" noWrap>{raffle.descricao}</Typography>

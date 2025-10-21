@@ -3,7 +3,7 @@
     overflow: hidden;
 
     &__header {
-        margin-bottom: 2rem;
+        margin-bottom: clamp(2rem, 4vw, 2.5rem);
     }
 
     &__grid {
@@ -16,9 +16,17 @@
 
     &__card-content {
         height: 100%;
+        justify-content: space-between;
     }
 
     &__card-header {
         font-weight: 800;
+    }
+
+    &__badge {
+        align-self: flex-start;
+        border-radius: 999px;
+        padding-inline: 1rem;
+        backdrop-filter: blur(12px);
     }
 }

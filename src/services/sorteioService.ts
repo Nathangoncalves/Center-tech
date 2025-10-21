@@ -1,5 +1,5 @@
 import { http } from "./http";
-import type { Sorteio, SorteioStatus } from "../types";
+import type { Identifier, Sorteio, SorteioStatus } from "@/types";
 
 export interface CreateSorteioInput {
     titulo: string;
@@ -10,28 +10,29 @@ export interface CreateSorteioInput {
     precoBilhete: number;
     qtdTotalBilhetes: number;
     qtdVendidos?: number;
-    itemUuid?: string;
+    itemId?: Identifier;
 }
 
 export interface UpdateSorteioInput extends Partial<CreateSorteioInput> {
-    uuid: string;
-    vencedorUuid?: string | null;
+    id: Identifier;
+    vencedorId?: Identifier | null;
 }
 
 export const sorteioService = {
+    listPublic: () => http.get<Sorteio[]>("/sorteio/public"),
     list: () => http.get<Sorteio[]>("/sorteio"),
-    get: (uuid: string) => http.get<Sorteio>(`/sorteio/${uuid}`),
-    create: ({ itemUuid, ...rest }: CreateSorteioInput) =>
+    get: (id: Identifier) => http.get<Sorteio>(`/sorteio/${id}`),
+    create: ({ itemId, ...rest }: CreateSorteioInput) =>
         http.post<Sorteio>("/sorteio/criar", {
             ...rest,
-            item: itemUuid ? { uuid: itemUuid } : undefined,
+            item: itemId ? { id: itemId } : undefined,
         }),
-    update: ({ uuid, itemUuid, vencedorUuid, ...rest }: UpdateSorteioInput) =>
+    update: ({ id, itemId, vencedorId, ...rest }: UpdateSorteioInput) =>
         http.post<Sorteio>("/sorteio/update", {
-            uuid,
+            id,
             ...rest,
-            item: itemUuid ? { uuid: itemUuid } : undefined,
-            vencedor: vencedorUuid ? { uuid: vencedorUuid } : undefined,
+            item: itemId ? { id: itemId } : undefined,
+            vencedor: vencedorId ? { id: vencedorId } : undefined,
         }),
-    remove: (uuid: string) => http.post<void>(`/sorteio/delete/${uuid}`),
+    remove: (id: Identifier) => http.post<void>(`/sorteio/delete/${id}`),
 };

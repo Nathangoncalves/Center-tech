@@ -7,9 +7,10 @@
         gap: 0.75rem;
     }
 
-    &__brand {
-        font-weight: 900;
-        letter-spacing: -0.5px;
+    &__logo {
+        height: 44px;
+        width: auto;
+        display: block;
     }
 
     &__nav button {

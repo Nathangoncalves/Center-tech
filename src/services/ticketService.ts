@@ -1,38 +1,45 @@
 import { http } from "./http";
-import type { Bilhete } from "../types";
+import type { Bilhete, Identifier } from "@/types";
+
+export interface TicketFilter {
+    userId?: Identifier;
+    sorteioId?: Identifier;
+    pago?: boolean;
+}
 
 export interface CreateTicketInput {
     numero: number;
-    userUuid: string;
-    sorteioUuid: string;
+    userId: Identifier;
+    sorteioId: Identifier;
     dataCompra: string;
     pago?: boolean;
 }
 
 export interface UpdateTicketInput {
-    uuid: string;
+    id: Identifier;
     numero?: number;
-    userUuid?: string;
-    sorteioUuid?: string;
+    userId?: Identifier;
+    sorteioId?: Identifier;
     dataCompra?: string;
     pago?: boolean;
 }
 
 export const ticketService = {
-    list: () => http.get<Bilhete[]>("/bilhete"),
-    get: (uuid: string) => http.get<Bilhete>(`/bilhete/${uuid}`),
-    create: ({ userUuid, sorteioUuid, ...payload }: CreateTicketInput) =>
+    list: (filter?: TicketFilter) => http.get<Bilhete[]>("/bilhete", { params: filter }),
+    mine: () => http.get<Bilhete[]>("/bilhete/me"),
+    get: (id: Identifier) => http.get<Bilhete>(`/bilhete/${id}`),
+    create: ({ userId, sorteioId, ...payload }: CreateTicketInput) =>
         http.post<Bilhete>("/bilhete/criar", {
             ...payload,
-            user: { uuid: userUuid },
-            sorteio: { uuid: sorteioUuid },
+            user: { id: userId },
+            sorteio: { id: sorteioId },
         }),
-    update: ({ uuid, userUuid, sorteioUuid, ...payload }: UpdateTicketInput) =>
+    update: ({ id, userId, sorteioId, ...payload }: UpdateTicketInput) =>
         http.post<Bilhete>("/bilhete/update", {
-            uuid,
+            id,
             ...payload,
-            user: userUuid ? { uuid: userUuid } : undefined,
-            sorteio: sorteioUuid ? { uuid: sorteioUuid } : undefined,
+            user: userId ? { id: userId } : undefined,
+            sorteio: sorteioId ? { id: sorteioId } : undefined,
         }),
-    remove: (uuid: string) => http.post<void>(`/bilhete/delete/${uuid}`),
+    remove: (id: Identifier) => http.post<void>(`/bilhete/delete/${id}`),
 };

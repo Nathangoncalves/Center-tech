@@ -1,6 +1,11 @@
 .hero {
     position: relative;
     padding-inline: 0;
+    min-height: calc(100vh - 88px);
+    display: flex;
+    align-items: center;
+    padding-block: clamp(6rem, 12vw, 10rem);
+    scroll-margin-top: 88px;
 
     &__content {
         max-width: 900px;

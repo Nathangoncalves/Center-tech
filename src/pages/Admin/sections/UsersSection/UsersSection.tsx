@@ -70,7 +70,7 @@ export default function UsersSection() {
                 </TableHead>
                 <TableBody>
                     {users.map((user) => (
-                        <TableRow key={user.uuid}>
+                        <TableRow key={user.id}>
                             <TableCell>{user.nome}</TableCell>
                             <TableCell>{user.email}</TableCell>
                             <TableCell>{user.telefone ?? "-"}</TableCell>

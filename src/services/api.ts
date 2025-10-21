@@ -7,6 +7,7 @@ const baseURL = normalizedBaseUrl.endsWith("/api")
     : `${normalizedBaseUrl}/api`;
 
 const TOKEN_STORAGE_KEY = "ng-auth-token";
+export const AUTH_TOKEN_CHANGED_EVENT = "ng-auth-token-changed";
 
 let inMemoryToken: string | null = null;
 
@@ -48,6 +49,11 @@ export function setAuthToken(token: string | null, persist = true) {
         } catch {
             /* storage indisponível */
         }
+    }
+    try {
+        window.dispatchEvent(new CustomEvent(AUTH_TOKEN_CHANGED_EVENT, { detail: { token } }));
+    } catch {
+        /* ambiente sem window */
     }
 }
 

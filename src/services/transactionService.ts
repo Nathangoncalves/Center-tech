@@ -1,32 +1,32 @@
 import { http } from "./http";
-import type { Transacao, TipoTransacao, MetodoPagamento } from "../types";
+import type { Identifier, MetodoPagamento, TipoTransacao, Transacao } from "@/types";
 
 export interface TransactionFilter {
-    userUuid?: string;
-    sorteioUuid?: string;
+    userId?: Identifier;
+    sorteioId?: Identifier;
     tipo?: TipoTransacao;
 }
 
 export interface CreateTransactionInput {
-    userUuid: string;
+    userId: Identifier;
     tipo: TipoTransacao;
     valor: number;
     metodoPagamento: MetodoPagamento;
     referencia?: string;
-    sorteioUuid?: string;
-    bilheteUuid?: string;
+    sorteioId?: Identifier;
+    bilheteId?: Identifier;
     data?: string;
 }
 
 export const transactionService = {
     list: (filter?: TransactionFilter) => http.get<Transacao[]>("/transacao", { params: filter }),
-    get: (uuid: string) => http.get<Transacao>(`/transacao/${uuid}`),
-    create: ({ userUuid, sorteioUuid, bilheteUuid, ...payload }: CreateTransactionInput) =>
+    get: (id: Identifier) => http.get<Transacao>(`/transacao/${id}`),
+    create: ({ userId, sorteioId, bilheteId, ...payload }: CreateTransactionInput) =>
         http.post<Transacao>("/transacao/criar", {
             ...payload,
-            user: { uuid: userUuid },
-            sorteio: sorteioUuid ? { uuid: sorteioUuid } : undefined,
-            bilhete: bilheteUuid ? { uuid: bilheteUuid } : undefined,
+            user: { id: userId },
+            sorteio: sorteioId ? { id: sorteioId } : undefined,
+            bilhete: bilheteId ? { id: bilheteId } : undefined,
         }),
-    remove: (uuid: string) => http.post<void>(`/transacao/delete/${uuid}`),
+    remove: (id: Identifier) => http.post<void>(`/transacao/delete/${id}`),
 };
