@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
     Alert,
     Box,
@@ -29,9 +29,9 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import type { User, UserRole } from "../../../types";
-import { userService } from "../../../services";
 import { useAdminData } from "../AdminDataProvider";
 import { formatCurrency, formatDateTime } from "../../../utils/formatters";
+import api from "../../../services/api";
 
 const ROLE_LABEL: Record<UserRole, string> = {
     ADMIN: "Administrador",
@@ -65,11 +65,7 @@ export default function AdminUsersSection() {
     const [submitting, setSubmitting] = useState(false);
     const [actionError, setActionError] = useState<string>();
 
-    const sortedUsers = useMemo(
-        () =>
-            [...users].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })),
-        [users],
-    );
+    const safeUsers = Array.isArray(users) ? users : [];
 
     const handleChange = (field: keyof UserFormState, value: string | number) => {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -88,8 +84,19 @@ export default function AdminUsersSection() {
                 senhaHash: form.senha,
                 role: form.role,
             };
-            const created = await userService.create(payload);
-            setUsers([...users, created]);
+            const { data: created } = await api.post<User>(
+                "/user/criar",
+                {
+                    nome: payload.nome,
+                    email: payload.email,
+                    telefone: payload.telefone,
+                    cpf: payload.cpf,
+                    saldo: payload.saldo,
+                    senhaHash: payload.senhaHash,
+                },
+                { params: { role: payload.role.toLowerCase() } },
+            );
+            setUsers([...safeUsers, created]);
             setOpen(false);
             setForm(INITIAL_STATE);
         } catch (err) {
@@ -103,8 +110,8 @@ export default function AdminUsersSection() {
     const handleDelete = async (uuid: string) => {
         if (!confirm("Deseja remover este usuário?")) return;
         try {
-            await userService.remove(uuid);
-            setUsers(users.filter((user) => user.uuid !== uuid));
+            await api.post(`/user/delete/${uuid}`);
+            setUsers(safeUsers.filter((user) => user.uuid !== uuid));
         } catch (err) {
             console.error("Erro ao excluir usuário", err);
             setActionError("Não foi possível remover o usuário. Tente novamente.");
@@ -113,8 +120,9 @@ export default function AdminUsersSection() {
 
     return (
         <Stack spacing={3}>
-            {error && <Alert severity="error">{error}</Alert>}
-
+            {(error || actionError) && (
+                <Alert severity="error">{actionError ?? error}</Alert>
+            )}
             <Paper sx={{ p: 3, borderRadius: 3 }}>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
                     <Stack spacing={0.5}>
@@ -158,17 +166,9 @@ export default function AdminUsersSection() {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {sortedUsers.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Nenhum usuário cadastrado.
-                                            </Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    sortedUsers.map((user) => (
-                                        <TableRow key={user.uuid}>
+                                {safeUsers.length ? (
+                                    safeUsers.map((user) => (
+                                        <TableRow key={user.uuid ?? user.email}>
                                             <TableCell>
                                                 <Stack spacing={0.5}>
                                                     <Typography fontWeight={600}>{user.nome}</Typography>
@@ -183,20 +183,32 @@ export default function AdminUsersSection() {
                                             <TableCell>{user.telefone || "—"}</TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    label={ROLE_LABEL[user.role]}
+                                                    label={ROLE_LABEL[user.role] ?? "—"}
                                                     color={user.role === "ADMIN" ? "secondary" : "default"}
                                                     size="small"
                                                 />
                                             </TableCell>
                                             <TableCell>{formatCurrency(user.saldo ?? 0)}</TableCell>
-                                            <TableCell>{formatDateTime(user.createdAt)}</TableCell>
+                                            <TableCell>{user.createdAt ? formatDateTime(user.createdAt) : "—"}</TableCell>
                                             <TableCell align="right">
-                                                <IconButton color="error" onClick={() => handleDelete(user.uuid)}>
+                                                <IconButton
+                                                    color="error"
+                                                    disabled={!user.uuid}
+                                                    onClick={() => user.uuid && handleDelete(user.uuid)}
+                                                >
                                                     <DeleteIcon />
                                                 </IconButton>
                                             </TableCell>
                                         </TableRow>
                                     ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={7}>
+                                            <Typography variant="body2" color="text.secondary" align="center">
+                                                Nenhum usuário cadastrado ainda.
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
                                 )}
                             </TableBody>
                         </Table>

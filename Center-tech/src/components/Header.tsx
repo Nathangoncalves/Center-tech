@@ -28,16 +28,15 @@ export default function Header({ mode, setMode }: Props) {
         zIndex: (t) => t.zIndex.appBar,
         borderBottom: 1,
         borderColor: "divider",
-        // ✅ usa função inline — evita undefined em theme
         bgcolor: (theme) => alpha(theme.palette.background.paper, mode === "dark" ? 0.2 : 0.7),
         backdropFilter: "saturate(180%) blur(12px)",
         WebkitBackdropFilter: "saturate(180%) blur(12px)",
         }}
     >
         <Toolbar sx={{ minHeight: 72 }}>
-        <Typography variant="h6" sx={{ fontWeight: 900 }}>
-            Centertech <Box component="span" sx={{ color: "primary.main" }}>Sorteios</Box>
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+            <img src="" alt="Centertech Sorteios" style={{ height: 40 }} />
+        </Box>
 
         <Box sx={{ flexGrow: 1 }} />
 

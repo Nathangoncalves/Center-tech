@@ -3,10 +3,10 @@ export interface Winner {
     nome: string;
     premio: string;
     sorteioId: string;
-    data: string;      // ISO
+    data: string;     
     cidade?: string;
     uf?: string;
-    foto?: string;     // url opcional
+    foto?: string;     
     }
     
     export const winners: Winner[] = [

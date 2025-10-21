@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
-import { getAuthToken } from "../services";
+import { getAuthToken } from "../services/api";
 
 interface RequireAdminProps {
     children: ReactNode;

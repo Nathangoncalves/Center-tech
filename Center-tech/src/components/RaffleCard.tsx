@@ -21,8 +21,12 @@ const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
 const money = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
 function resolveImage(sorteio: Sorteio): string {
-    if (sorteio.midias?.length) return sorteio.midias[0]!.url;
-    if (sorteio.item?.imageUrl) return sorteio.item.imageUrl;
+    const midiaUrl = sorteio.midias?.map((midia) => midia.url).find((url) => url && url.trim().length > 0);
+    if (midiaUrl) return midiaUrl;
+
+    const itemUrl = sorteio.item?.imageUrl;
+    if (itemUrl && itemUrl.trim().length > 0) return itemUrl;
+
     return "/assets/image.png";
 }
 
@@ -90,7 +94,12 @@ export default function RaffleCard({ sorteio }: { sorteio: Sorteio }) {
                                 </Typography>
                             </Stack>
                         </Box>
-                        <Button fullWidth variant="contained" sx={{ mt: 0.5 }} onClick={() => navigate("/cadastro")}>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            sx={{ mt: 0.5 }}
+                            component="span"
+                        >
                             Participar
                         </Button>
                     </Stack>

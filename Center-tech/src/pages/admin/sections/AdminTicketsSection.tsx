@@ -27,9 +27,9 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import type { Ticket } from "../../../types";
-import { ticketService } from "../../../services";
 import { useAdminData } from "../AdminDataProvider";
 import { formatDateTime } from "../../../utils/formatters";
+import api from "../../../services/api";
 
 interface TicketFormState {
     numero: number;
@@ -66,12 +66,19 @@ export default function AdminTicketsSection() {
         setSubmitting(true);
         setActionError(undefined);
         try {
-            const created = await ticketService.create({
+            const payload = {
                 numero: Number(form.numero),
                 userUuid: form.userUuid,
                 sorteioUuid: form.sorteioUuid,
                 dataCompra: new Date(form.dataCompra).toISOString(),
                 pago: form.pago,
+            };
+            const { data: created } = await api.post<Ticket>("/bilhete/criar", {
+                numero: payload.numero,
+                dataCompra: payload.dataCompra,
+                pago: payload.pago,
+                user: { uuid: payload.userUuid },
+                sorteio: { uuid: payload.sorteioUuid },
             });
             setTickets([created, ...tickets]);
             setOpen(false);
@@ -87,7 +94,7 @@ export default function AdminTicketsSection() {
     const handleDelete = async (uuid: string) => {
         if (!confirm("Remover bilhete?")) return;
         try {
-            await ticketService.remove(uuid);
+            await api.post(`/bilhete/delete/${uuid}`);
             setTickets(tickets.filter((ticket) => ticket.uuid !== uuid));
         } catch (err) {
             console.error("Erro ao remover bilhete", err);
@@ -97,7 +104,7 @@ export default function AdminTicketsSection() {
 
     const handleTogglePago = async (ticket: Ticket, pago: boolean) => {
         try {
-            const updated = await ticketService.update({
+            const { data: updated } = await api.post<Ticket>("/bilhete/update", {
                 uuid: ticket.uuid,
                 pago,
             });

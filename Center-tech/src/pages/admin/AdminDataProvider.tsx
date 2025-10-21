@@ -7,14 +7,7 @@ import {
     useMemo,
     useState,
 } from "react";
-import {
-    itemService,
-    mediaService,
-    sorteioService,
-    ticketService,
-    transactionService,
-    userService,
-} from "../../services";
+import api, { getAuthToken } from "../../services/api";
 import type { Item, Midia, Sorteio, Ticket, Transacao, User } from "../../types";
 
 interface AdminDataContextValue {
@@ -60,6 +53,14 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         setLoading(true);
         setError(undefined);
         try {
+            const token = getAuthToken();
+            const authConfig = token
+                ? {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+                : undefined;
             const [
                 usersData,
                 sorteiosData,
@@ -68,12 +69,12 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
                 itemsData,
                 midiasData,
             ] = await Promise.all([
-                userService.list(),
-                sorteioService.list(),
-                ticketService.list(),
-                transactionService.list(),
-                itemService.list(),
-                mediaService.list(),
+                api.get<User[]>("/user", authConfig).then((res) => res.data),
+                api.get<Sorteio[]>("/sorteio", authConfig).then((res) => res.data),
+                api.get<Ticket[]>("/bilhete", authConfig).then((res) => res.data),
+                api.get<Transacao[]>("/transacao", authConfig).then((res) => res.data),
+                api.get<Item[]>("/item", authConfig).then((res) => res.data),
+                api.get<Midia[]>("/midia", authConfig).then((res) => res.data),
             ]);
             setUsers(usersData);
             setSorteios(sorteiosData);

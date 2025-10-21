@@ -1,6 +1,6 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import { Alert, Box, Button, Checkbox, FormControlLabel, Grid, TextField } from "@mui/material";
-import { userService } from "../services";
+import api from "../services/api";
 
 type FormState = {
     nome: string;
@@ -55,11 +55,17 @@ export default function SignupForm() {
 
         setLoading(true);
         try {
-            await userService.create({
-                nome: values.nome.trim(),
-                email: values.email.trim().toLowerCase(),
-                senhaHash: values.senha,
-            });
+            await api.post(
+                "/user/criar",
+                {
+                    nome: values.nome.trim(),
+                    email: values.email.trim().toLowerCase(),
+                    telefone: values.telefone.trim(),
+                    cpf: values.cpf?.trim() || undefined,
+                    senhaHash: values.senha,
+                },
+                { params: { role: "cliente" } },
+            );
 
             setOk("Cadastro realizado com sucesso! Você já pode acessar sua conta.");
             setValues(INITIAL);
