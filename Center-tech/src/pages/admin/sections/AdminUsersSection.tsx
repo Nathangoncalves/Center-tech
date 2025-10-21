@@ -120,9 +120,7 @@ export default function AdminUsersSection() {
 
     return (
         <Stack spacing={3}>
-            {(error || actionError) && (
-                <Alert severity="error">{actionError ?? error}</Alert>
-            )}
+            {(error || actionError) && <Alert severity="error">{actionError ?? error}</Alert>}
             <Paper sx={{ p: 3, borderRadius: 3 }}>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
                     <Stack spacing={0.5}>

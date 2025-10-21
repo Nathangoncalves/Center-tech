@@ -63,10 +63,10 @@ export default function Header({ mode, setMode }: Props) {
             transformOrigin={{ vertical: "top", horizontal: "right" }}
             >
             <MenuItem onClick={() => { onClose(); navigate("/cadastro"); }}>
-                Criar Conta (Participante)
+                Criar Conta
             </MenuItem>
             <MenuItem onClick={() => { onClose(); navigate("/login"); }}>
-                Fazer Login (Gestor)
+                Fazer Login
             </MenuItem>
             </Menu>
         </Stack>
