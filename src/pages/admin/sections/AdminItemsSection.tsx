@@ -20,6 +20,8 @@ import {
     TableRow,
     TextField,
     Typography,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -50,6 +52,8 @@ export default function AdminItemsSection() {
     const [form, setForm] = useState<ItemFormState>(INITIAL_STATE);
     const [submitting, setSubmitting] = useState(false);
     const [actionError, setActionError] = useState<string>();
+    const theme = useTheme();
+    const isCompactLayout = useMediaQuery(theme.breakpoints.down("md"));
 
     const sortedItems = useMemo(
         () => [...items].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })),
@@ -128,8 +132,13 @@ export default function AdminItemsSection() {
         <Stack spacing={3}>
             {error && <Alert severity="error">{error}</Alert>}
 
-            <Paper sx={{ p: 3, borderRadius: 3 }}>
-                <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
+            <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: "12px" }}>
+                <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={2}
+                    justifyContent="space-between"
+                    alignItems={{ xs: "stretch", md: "center" }}
+                >
                     <Stack spacing={0.5}>
                         <Typography variant="h6" fontWeight={800}>
                             Itens / Prêmios
@@ -144,12 +153,68 @@ export default function AdminItemsSection() {
                 </Stack>
             </Paper>
 
-            <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>
+            <Paper sx={{ borderRadius: "12px", overflow: { xs: "visible", md: "hidden" } }}>
                 {loading ? (
-                    <Box sx={{ p: 3 }}>
+                    <Box sx={{ p: { xs: 2, md: 3 } }}>
                         <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={52} />
+                    </Box>
+                ) : isCompactLayout ? (
+                    <Box sx={{ p: 2 }}>
+                        {sortedItems.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary">
+                                Nenhum item cadastrado ainda.
+                            </Typography>
+                        ) : (
+                            <Stack spacing={2}>
+                                {sortedItems.map((item) => (
+                                    <Box
+                                        key={item.uuid}
+                                        sx={{
+                                            border: 1,
+                                            borderColor: "divider",
+                                            borderRadius: "10px",
+                                            p: 2,
+                                            bgcolor: "background.paper",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: 1.5,
+                                        }}
+                                    >
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                            <Typography fontWeight={700}>{item.nome}</Typography>
+                                            <Stack direction="row" spacing={1}>
+                                                <IconButton onClick={() => openDialog(item)} color="primary" size="small">
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                                <IconButton onClick={() => handleDelete(item.uuid)} color="error" size="small">
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Stack>
+                                        </Stack>
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Typography variant="body2" color="text.secondary">
+                                                Valor estimado:
+                                            </Typography>
+                                            <Typography variant="body2">{formatCurrency(item.valor)}</Typography>
+                                        </Stack>
+                                        <Stack spacing={0.5}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Imagem (URL)
+                                            </Typography>
+                                            <Typography variant="body2">{item.imageUrl || "—"}</Typography>
+                                        </Stack>
+                                        <Stack spacing={0.5}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Descrição
+                                            </Typography>
+                                            <Typography variant="body2">{item.descricao}</Typography>
+                                        </Stack>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        )}
                     </Box>
                 ) : (
                     <TableContainer>

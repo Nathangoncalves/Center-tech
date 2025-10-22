@@ -73,8 +73,8 @@ export default function Login() {
         <Container maxWidth="sm">
             <Paper sx={{ p: 4 }}>
             <Stack spacing={2} alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h4" fontWeight={800}>Login do Gestor</Typography>
-                <Typography color="text.secondary">Acesse o painel de cadastros.</Typography>
+                <Typography variant="h4" fontWeight={800}>Login</Typography>
+                <Typography color="text.secondary">Seja bem vindo!, acesse com suas credenciais para entrar na nossa área de login.</Typography>
             </Stack>
             <Box component="form" onSubmit={handle}>
                 <Stack spacing={2}>
