@@ -27,10 +27,10 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import type { SorteioStatus } from "../../../types";
-import { sorteioService } from "../../../services";
+import type { Sorteio, SorteioStatus } from "../../../types";
 import { useAdminData } from "../AdminDataProvider";
 import { formatCurrency, formatDate, formatDateTime } from "../../../utils/formatters";
+import api from "../../../services/api";
 
 interface SorteioFormState {
     titulo: string;
@@ -79,12 +79,21 @@ export default function AdminRafflesSection() {
         setSubmitting(true);
         setActionError(undefined);
         try {
-            const created = await sorteioService.create({
-                ...form,
+            const payload = {
+                titulo: form.titulo.trim(),
+                descricao: form.descricao.trim(),
+                dataAgendada: form.dataAgendada || undefined,
+                dataEncerramento: form.dataEncerramento || undefined,
+                status: form.status,
+                item: form.itemUuid ? { uuid: form.itemUuid } : undefined,
                 precoBilhete: Number(form.precoBilhete) || 0,
                 qtdTotalBilhetes: Number(form.qtdTotalBilhetes) || 0,
-                itemUuid: form.itemUuid || undefined,
-            });
+                qtdTotalVendidos: 0,
+                vencedor: null,
+                bilhetes: [],
+                midias: []
+            };
+            const { data: created } = await api.post<Sorteio>("/sorteio/criar", payload);
             setSorteios([...sorteios, created]);
             setOpen(false);
             setForm(INITIAL_STATE);
@@ -98,7 +107,7 @@ export default function AdminRafflesSection() {
 
     const handleStatusChange = async (uuid: string, status: SorteioStatus) => {
         try {
-            const updated = await sorteioService.update({ uuid, status });
+            const { data: updated } = await api.post<Sorteio>("/sorteio/update", { uuid, status });
             setSorteios(sorteios.map((s) => (s.uuid === uuid ? updated : s)));
         } catch (err) {
             console.error("Erro ao atualizar sorteio", err);
@@ -109,7 +118,7 @@ export default function AdminRafflesSection() {
     const handleDelete = async (uuid: string) => {
         if (!confirm("Deseja remover este sorteio?")) return;
         try {
-            await sorteioService.remove(uuid);
+            await api.post(`/sorteio/delete/${uuid}`);
             setSorteios(sorteios.filter((s) => s.uuid !== uuid));
         } catch (err) {
             console.error("Erro ao remover sorteio", err);

@@ -23,8 +23,8 @@ import AdminTicketsSection from "./sections/AdminTicketsSection";
 import AdminTransactionsSection from "./sections/AdminTransactionsSection";
 import AdminItemsSection from "./sections/AdminItemsSection";
 import AdminMediaSection from "./sections/AdminMediaSection";
-import { authService } from "../../services";
 import { useNavigate } from "react-router-dom";
+import { clearAuthToken } from "../../services/api";
 
 type SectionId = "overview" | "users" | "raffles" | "tickets" | "transactions" | "items" | "media" | "settings";
 
@@ -105,7 +105,7 @@ export default function Admin() {
                 <IconButton
                     color="inherit"
                     onClick={() => {
-                        authService.logout();
+                        clearAuthToken();
                         navigate("/login", { replace: true, state: { from: "/gestor" } });
                     }}
                 >

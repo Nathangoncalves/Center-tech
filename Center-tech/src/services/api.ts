@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const rawBaseUrl = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8080";
+const rawBaseUrl = ("http://localhost:8081");
 const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, "");
 const baseURL = normalizedBaseUrl.endsWith("/api")
     ? normalizedBaseUrl
@@ -10,12 +10,21 @@ const TOKEN_STORAGE_KEY = "ng-auth-token";
 
 let inMemoryToken: string | null = null;
 
-export const api = axios.create({
+const api = axios.create({
     baseURL,
     headers: {
         "Content-Type": "application/json",
     },
+    withCredentials: true,
 });
+
+function applyAuthHeader(token: string | null) {
+    if (token) {
+        api.defaults.headers.common.Authorization = `Bearer ${token}`;
+    } else {
+        delete api.defaults.headers.common.Authorization;
+    }
+}
 
 api.interceptors.request.use((config) => {
     const token = inMemoryToken ?? getStoredToken();
@@ -38,6 +47,7 @@ api.interceptors.response.use(
 
 export function setAuthToken(token: string | null, persist = true) {
     inMemoryToken = token;
+    applyAuthHeader(token);
     if (persist) {
         try {
             if (token) {
@@ -46,13 +56,17 @@ export function setAuthToken(token: string | null, persist = true) {
                 localStorage.removeItem(TOKEN_STORAGE_KEY);
             }
         } catch {
-            /* storage indisponível */
+            // Ignore storage errors (e.g., private mode)
         }
     }
 }
 
 export function getAuthToken(): string | null {
     return inMemoryToken ?? getStoredToken();
+}
+
+export function clearAuthToken() {
+    setAuthToken(null);
 }
 
 function getStoredToken(): string | null {
@@ -62,3 +76,11 @@ function getStoredToken(): string | null {
         return null;
     }
 }
+
+const storedToken = getStoredToken();
+if (storedToken) {
+    inMemoryToken = storedToken;
+    applyAuthHeader(storedToken);
+}
+
+export default api;

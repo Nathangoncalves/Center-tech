@@ -25,9 +25,9 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import type { Item } from "../../../types";
-import { itemService } from "../../../services";
 import { useAdminData } from "../AdminDataProvider";
 import { formatCurrency } from "../../../utils/formatters";
+import api from "../../../services/api";
 
 interface ItemFormState {
     nome: string;
@@ -83,10 +83,21 @@ export default function AdminItemsSection() {
         setActionError(undefined);
         try {
             if (editing) {
-                const updated = await itemService.update({ uuid: editing.uuid, ...form });
+                const { data: updated } = await api.post<Item>("/item/update", {
+                    uuid: editing.uuid,
+                    nome: form.nome.trim(),
+                    descricao: form.descricao.trim(),
+                    imageUrl: form.imageUrl.trim(),
+                    valor: Number(form.valor) || 0,
+                });
                 setItems(items.map((item) => (item.uuid === editing.uuid ? updated : item)));
             } else {
-                const created = await itemService.create(form);
+                const { data: created } = await api.post<Item>("/item/criar", {
+                    nome: form.nome.trim(),
+                    descricao: form.descricao.trim(),
+                    imageUrl: form.imageUrl.trim(),
+                    valor: Number(form.valor) || 0,
+                });
                 setItems([...items, created]);
             }
             setOpen(false);
@@ -101,7 +112,7 @@ export default function AdminItemsSection() {
     const handleDelete = async (uuid: string) => {
         if (!confirm("Deseja remover este item?")) return;
         try {
-            await itemService.remove(uuid);
+            await api.post(`/item/delete/${uuid}`);
             setItems(items.filter((item) => item.uuid !== uuid));
         } catch (err) {
             console.error("Erro ao remover item", err);

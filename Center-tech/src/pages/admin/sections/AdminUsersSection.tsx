@@ -27,11 +27,12 @@ import {
     Typography,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import type { User, UserRole } from "../../../types";
-import { userService } from "../../../services";
 import { useAdminData } from "../AdminDataProvider";
 import { formatCurrency, formatDateTime } from "../../../utils/formatters";
+import api from "../../../services/api";
 
 const ROLE_LABEL: Record<UserRole, string> = {
     ADMIN: "Administrador",
@@ -61,62 +62,140 @@ const INITIAL_STATE: UserFormState = {
 export default function AdminUsersSection() {
     const { users, setUsers, loading, error } = useAdminData();
     const [open, setOpen] = useState(false);
+    const [editing, setEditing] = useState<User | null>(null);
     const [form, setForm] = useState<UserFormState>(INITIAL_STATE);
     const [submitting, setSubmitting] = useState(false);
     const [actionError, setActionError] = useState<string>();
+    const [listError, setListError] = useState<string>();
+
+    const safeUsers = useMemo(
+        () => (Array.isArray(users) ? users : []),
+        [users],
+    );
 
     const sortedUsers = useMemo(
         () =>
-            [...users].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })),
-        [users],
+            [...safeUsers].sort((a, b) =>
+                (a.nome ?? "").localeCompare(b.nome ?? "", "pt-BR", { sensitivity: "base" }),
+            ),
+        [safeUsers],
     );
+
+    const openDialog = (user?: User) => {
+        if (user) {
+            setEditing(user);
+            setForm({
+                nome: user.nome ?? "",
+                email: user.email ?? "",
+                telefone: user.telefone ?? "",
+                cpf: user.cpf ?? "",
+                senha: "",
+                role: (user.role ?? "CLIENTE") as UserRole,
+                saldo: typeof user.saldo === "number" && Number.isFinite(user.saldo) ? user.saldo : 0,
+            });
+        } else {
+            setEditing(null);
+            setForm(INITIAL_STATE);
+        }
+        setActionError(undefined);
+        setOpen(true);
+    };
+
+    const closeDialog = () => {
+        if (submitting) return;
+        setOpen(false);
+        setEditing(null);
+    };
 
     const handleChange = (field: keyof UserFormState, value: string | number) => {
         setForm((prev) => ({ ...prev, [field]: value }));
     };
 
-    const handleCreate = async () => {
+    const handleSubmit = async () => {
         setSubmitting(true);
         setActionError(undefined);
+        setListError(undefined);
+
+        const saldoValue = Number.isFinite(form.saldo) ? form.saldo : 0;
+
+        const basePayload = {
+            nome: form.nome.trim(),
+            email: form.email.trim().toLowerCase(),
+            telefone: form.telefone.trim() || undefined,
+            cpf: form.cpf.trim() || undefined,
+            role: form.role,
+            saldo: saldoValue,
+        };
+
         try {
-            const payload = {
-                nome: form.nome.trim(),
-                email: form.email.trim().toLowerCase(),
-                telefone: form.telefone.trim(),
-                cpf: form.cpf.trim() || undefined,
-                saldo: Number(form.saldo) || 0,
-                senhaHash: form.senha,
-                role: form.role,
-            };
-            const created = await userService.create(payload);
-            setUsers([...users, created]);
+            if (editing) {
+                const { data: updated } = await api.post<User>("/user/update", {
+                    uuid: editing.uuid,
+                    ...basePayload,
+                    senha: form.senha ? form.senha : undefined,
+                });
+                setUsers(safeUsers.map((user) => (user.uuid === updated.uuid ? updated : user)));
+            } else {
+                if (!form.senha.trim()) {
+                    setActionError("Informe uma senha temporária para o novo usuário.");
+                    setSubmitting(false);
+                    return;
+                }
+                const { data: created } = await api.post<User>("/user/criar", {
+                    ...basePayload,
+                    senha: form.senha,
+                });
+                setUsers([...safeUsers, created]);
+            }
+
             setOpen(false);
+            setEditing(null);
             setForm(INITIAL_STATE);
         } catch (err) {
-            console.error("Erro ao criar usuário", err);
-            setActionError("Não foi possível criar o usuário. Verifique os dados e tente novamente.");
+            console.error("Erro ao salvar usuário", err);
+            setActionError("Não foi possível salvar o usuário. Verifique os dados e tente novamente.");
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleDelete = async (uuid: string) => {
+    const handleDelete = async (uuid?: string) => {
+        if (!uuid) {
+            setListError("Não foi possível identificar o usuário para exclusão.");
+            return;
+        }
         if (!confirm("Deseja remover este usuário?")) return;
         try {
-            await userService.remove(uuid);
-            setUsers(users.filter((user) => user.uuid !== uuid));
+            setListError(undefined);
+            await api.post(`/user/delete/${uuid}`);
+            setUsers(safeUsers.filter((user) => user.uuid !== uuid));
         } catch (err) {
             console.error("Erro ao excluir usuário", err);
-            setActionError("Não foi possível remover o usuário. Tente novamente.");
+            setListError("Não foi possível remover o usuário. Tente novamente.");
         }
     };
 
     return (
         <Stack spacing={3}>
-            {error && <Alert severity="error">{error}</Alert>}
+            {error && (
+                <Alert severity="error">
+                    {error}
+                </Alert>
+            )}
+
+            {listError && (
+                <Alert severity="error" onClose={() => setListError(undefined)}>
+                    {listError}
+                </Alert>
+            )}
 
             <Paper sx={{ p: 3, borderRadius: 3 }}>
-                <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
+                <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={2}
+                    justifyContent="space-between"
+                    alignItems={{ xs: "stretch", md: "center" }}
+                >
                     <Stack spacing={0.5}>
                         <Typography variant="h6" fontWeight={800}>
                             Usuários cadastrados
@@ -126,7 +205,7 @@ export default function AdminUsersSection() {
                         </Typography>
                     </Stack>
                     <Button
-                        onClick={() => setOpen(true)}
+                        onClick={() => openDialog()}
                         startIcon={<AddIcon />}
                         variant="contained"
                         size="large"
@@ -162,41 +241,47 @@ export default function AdminUsersSection() {
                                     <TableRow>
                                         <TableCell colSpan={7}>
                                             <Typography variant="body2" color="text.secondary">
-                                                Nenhum usuário cadastrado.
+                                                Nenhum usuário cadastrado até o momento.
                                             </Typography>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    sortedUsers.map((user) => (
-                                        <TableRow key={user.uuid}>
-                                            <TableCell>
-                                                <Stack spacing={0.5}>
-                                                    <Typography fontWeight={600}>{user.nome}</Typography>
-                                                    {user.cpf && (
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            CPF: {user.cpf}
-                                                        </Typography>
-                                                    )}
-                                                </Stack>
-                                            </TableCell>
-                                            <TableCell>{user.email}</TableCell>
-                                            <TableCell>{user.telefone || "—"}</TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    label={ROLE_LABEL[user.role]}
-                                                    color={user.role === "ADMIN" ? "secondary" : "default"}
-                                                    size="small"
-                                                />
-                                            </TableCell>
-                                            <TableCell>{formatCurrency(user.saldo ?? 0)}</TableCell>
-                                            <TableCell>{formatDateTime(user.createdAt)}</TableCell>
-                                            <TableCell align="right">
-                                                <IconButton color="error" onClick={() => handleDelete(user.uuid)}>
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
+                                    sortedUsers.map((user) => {
+                                        const roleLabel = ROLE_LABEL[(user.role ?? "CLIENTE") as UserRole] ?? "—";
+                                        return (
+                                            <TableRow key={user.uuid}>
+                                                <TableCell>
+                                                    <Stack spacing={0.5}>
+                                                        <Typography fontWeight={600}>{user.nome ?? "—"}</Typography>
+                                                        {user.cpf && (
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                CPF: {user.cpf}
+                                                            </Typography>
+                                                        )}
+                                                    </Stack>
+                                                </TableCell>
+                                                <TableCell>{user.email ?? "—"}</TableCell>
+                                                <TableCell>{user.telefone || "—"}</TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        label={roleLabel}
+                                                        color={user.role === "ADMIN" ? "secondary" : "default"}
+                                                        size="small"
+                                                    />
+                                                </TableCell>
+                                                <TableCell>{formatCurrency(user.saldo ?? 0)}</TableCell>
+                                                <TableCell>{formatDateTime(user.createdAt)}</TableCell>
+                                                <TableCell align="right">
+                                                    <IconButton color="primary" onClick={() => openDialog(user)}>
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                    <IconButton color="error" onClick={() => handleDelete(user.uuid)}>
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
                                 )}
                             </TableBody>
                         </Table>
@@ -204,8 +289,8 @@ export default function AdminUsersSection() {
                 )}
             </Paper>
 
-            <Dialog open={open} onClose={() => (submitting ? null : setOpen(false))} maxWidth="sm" fullWidth>
-                <DialogTitle>Novo usuário</DialogTitle>
+            <Dialog open={open} onClose={closeDialog} maxWidth="sm" fullWidth>
+                <DialogTitle>{editing ? "Editar usuário" : "Novo usuário"}</DialogTitle>
                 <DialogContent dividers>
                     <Grid container spacing={2}>
                         <Grid item xs={12}>
@@ -259,22 +344,31 @@ export default function AdminUsersSection() {
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <TextField
-                                label="Saldo inicial"
+                                label="Saldo"
                                 type="number"
+                                inputProps={{ step: 0.01 }}
                                 value={form.saldo}
-                                onChange={(e) => handleChange("saldo", Number(e.target.value))}
+                                onChange={(e) => {
+                                    const parsed = Number(e.target.value);
+                                    handleChange("saldo", Number.isNaN(parsed) ? 0 : parsed);
+                                }}
                                 fullWidth
+                                required
                             />
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
-                                label="Senha temporária"
+                                label={editing ? "Nova senha (opcional)" : "Senha temporária"}
                                 type="password"
                                 value={form.senha}
                                 onChange={(e) => handleChange("senha", e.target.value)}
-                                helperText="O usuário poderá alterar a senha após o primeiro acesso."
+                                helperText={
+                                    editing
+                                        ? "Preencha para redefinir a senha do usuário."
+                                        : "O usuário poderá alterar a senha após o primeiro acesso."
+                                }
                                 fullWidth
-                                required
+                                required={!editing}
                             />
                         </Grid>
                     </Grid>
@@ -286,11 +380,11 @@ export default function AdminUsersSection() {
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpen(false)} disabled={submitting}>
+                    <Button onClick={closeDialog} disabled={submitting}>
                         Cancelar
                     </Button>
-                    <Button onClick={handleCreate} variant="contained" disabled={submitting}>
-                        {submitting ? "Salvando..." : "Criar usuário"}
+                    <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
+                        {submitting ? "Salvando..." : editing ? "Atualizar usuário" : "Criar usuário"}
                     </Button>
                 </DialogActions>
             </Dialog>

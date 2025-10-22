@@ -7,7 +7,7 @@ import RaffleCard from "../../components/RaffleCard";
 import Winners from "@/components/Winners";
 import Regulation from "../../components/Regulation";
 import type { Sorteio } from "../../types";
-import { sorteioService } from "../../services";
+import api from "../../services/api";
 
 export default function Home() {
     const { theme, mode, setMode } = useNgTheme();
@@ -18,8 +18,15 @@ export default function Home() {
         let active = true;
         (async () => {
             try {
-                const data = await sorteioService.list();
-                if (active) setSorteios(data);
+                const { data } = await api.get<(Sorteio[] | { content?: Sorteio[] } | null)>("/sorteio");
+                if (!active) return;
+                const normalized =
+                    Array.isArray(data)
+                        ? data
+                        : Array.isArray((data as { content?: Sorteio[] } | null | undefined)?.content)
+                            ? ((data as { content?: Sorteio[] }).content ?? [])
+                            : [];
+                setSorteios(normalized);
             } catch (error) {
                 console.error("Erro ao carregar sorteios", error);
             } finally {

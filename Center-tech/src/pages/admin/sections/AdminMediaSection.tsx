@@ -26,8 +26,8 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import type { Midia, Sorteio, TipoMidia } from "../../../types";
-import { mediaService } from "../../../services";
 import { useAdminData } from "../AdminDataProvider";
+import api from "../../../services/api";
 
 interface MediaFormState {
     url: string;
@@ -89,14 +89,22 @@ export default function AdminMediaSection() {
         setSubmitting(true);
         setActionError(undefined);
         try {
+            const sorteioUuid = form.sorteioUuid?.trim();
+            const sorteioPayload = sorteioUuid ? sorteioUuid : null;
             if (editing) {
-                const updated = await mediaService.update({
+                const { data: updated } = await api.post<Midia>("/midia/update", {
                     uuid: editing.uuid,
-                    ...form,
+                    url: form.url.trim(),
+                    tipo: form.tipo,
+                    sorteio: sorteioPayload,
                 });
                 setMidias(midias.map((m) => (m.uuid === editing.uuid ? updated : m)));
             } else {
-                const created = await mediaService.create(form);
+                const { data: created } = await api.post<Midia>("/midia/criar", {
+                    url: form.url.trim(),
+                    tipo: form.tipo,
+                    sorteio: sorteioPayload,
+                });
                 setMidias([created, ...midias]);
             }
             setOpen(false);
@@ -111,7 +119,7 @@ export default function AdminMediaSection() {
     const handleDelete = async (uuid: string) => {
         if (!confirm("Deseja remover esta mídia?")) return;
         try {
-            await mediaService.remove(uuid);
+            await api.post(`/midia/delete/${uuid}`);
             setMidias(midias.filter((m) => m.uuid !== uuid));
         } catch (err) {
             console.error("Erro ao remover mídia", err);

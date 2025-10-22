@@ -58,11 +58,16 @@ const sortByDate = <T extends { data?: string; createdAt?: string }>(items: T[])
 export default function AdminOverviewSection() {
     const { loading, error, users, sorteios, tickets, transacoes } = useAdminData();
 
-    const faturamentoTotal = sumEntradas(transacoes) - sumSaidas(transacoes);
-    const abertos = sorteios.filter((s) => s.status === "ABERTO").length;
+    const safeTransacoes = Array.isArray(transacoes) ? transacoes : [];
+    const safeSorteios = Array.isArray(sorteios) ? sorteios : [];
+    const safeUsers = Array.isArray(users) ? users : [];
+    const safeTickets = Array.isArray(tickets) ? tickets : [];
+
+    const faturamentoTotal = sumEntradas(safeTransacoes) - sumSaidas(safeTransacoes);
+    const abertos = safeSorteios.filter((s) => s.status === "ABERTO").length;
     const vendaMedia =
-        sorteios.length > 0
-            ? sorteios.reduce((acc, sorteio) => acc + computeProgress(sorteio), 0) / sorteios.length
+        safeSorteios.length > 0
+            ? safeSorteios.reduce((acc, sorteio) => acc + computeProgress(sorteio), 0) / safeSorteios.length
             : 0;
 
     return (
@@ -75,13 +80,13 @@ export default function AdminOverviewSection() {
                         key === "faturamento"
                             ? formatCurrency(faturamentoTotal)
                             : key === "usuarios"
-                            ? formatNumber(users.length)
+                            ? formatNumber(safeUsers.length)
                             : key === "bilhetes"
-                            ? formatNumber(tickets.length)
-                            : formatNumber(transacoes.length);
+                            ? formatNumber(safeTickets.length)
+                            : formatNumber(safeTransacoes.length);
 
                     return (
-                        <Grid item xs={12} md={3} key={key}>
+                        <Grid key={key} size={{ xs: 12, md: 3 }}>
                             <Paper sx={{ p: 3, borderRadius: 3 }}>
                                 <Stack spacing={1.5}>
                                     <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -105,7 +110,7 @@ export default function AdminOverviewSection() {
             </Grid>
 
             <Grid container spacing={3}>
-                <Grid item xs={12} lg={7}>
+                <Grid size={{ xs: 12, lg: 7 }}>
                     <Paper sx={{ p: 3, borderRadius: 3 }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                             <Typography variant="h6" fontWeight={800}>
@@ -121,7 +126,7 @@ export default function AdminOverviewSection() {
                             </Stack>
                         ) : (
                             <List disablePadding>
-                                {sortByDate(sorteios)
+                                {sortByDate(safeSorteios)
                                     .slice(0, 5)
                                     .map((sorteio) => (
                                         <ListItem key={sorteio.uuid} disableGutters sx={{ py: 1.5 }}>
@@ -153,7 +158,7 @@ export default function AdminOverviewSection() {
                                             />
                                         </ListItem>
                                     ))}
-                                {!sorteios.length && (
+                                {!safeSorteios.length && (
                                     <Typography variant="body2" color="text.secondary">
                                         Nenhum sorteio cadastrado ainda.
                                     </Typography>
@@ -163,7 +168,7 @@ export default function AdminOverviewSection() {
                     </Paper>
                 </Grid>
 
-                <Grid item xs={12} lg={5}>
+                <Grid size={{ xs: 12, lg: 5 }}>
                     <Paper sx={{ p: 3, borderRadius: 3 }}>
                         <Typography variant="h6" fontWeight={800} sx={{ mb: 2 }}>
                             Últimas transações
@@ -176,7 +181,7 @@ export default function AdminOverviewSection() {
                             </Stack>
                         ) : (
                             <List disablePadding>
-                                {sortByDate(transacoes)
+                                {sortByDate(safeTransacoes)
                                     .slice(0, 6)
                                     .map((transacao) => (
                                         <ListItem key={transacao.uuid} disableGutters sx={{ py: 1.2 }}>
@@ -210,7 +215,7 @@ export default function AdminOverviewSection() {
                                             />
                                         </ListItem>
                                     ))}
-                                {!transacoes.length && (
+                                {!safeTransacoes.length && (
                                     <Typography variant="body2" color="text.secondary">
                                         Nenhuma transação registrada ainda.
                                     </Typography>

@@ -24,10 +24,10 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
-import type { MetodoPagamento, TipoTransacao } from "../../../types";
-import { transactionService } from "../../../services";
+import type { MetodoPagamento, TipoTransacao, Transacao } from "../../../types";
 import { useAdminData } from "../AdminDataProvider";
 import { formatCurrency, formatDateTime } from "../../../utils/formatters";
+import api from "../../../services/api";
 
 interface TransactionFormState {
     userUuid: string;
@@ -69,29 +69,43 @@ export default function AdminTransactionsSection() {
     const [submitting, setSubmitting] = useState(false);
     const [actionError, setActionError] = useState<string>();
 
+    const safeTransacoes = Array.isArray(transacoes) ? transacoes : [];
+    const safeUsers = Array.isArray(users) ? users : [];
+    const safeSorteios = Array.isArray(sorteios) ? sorteios : [];
+    const safeTickets = Array.isArray(tickets) ? tickets : [];
+
     const sortedTransacoes = useMemo(
         () =>
-            [...transacoes].sort(
-                (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime(),
+            [...safeTransacoes].sort(
+                (a, b) => new Date(b.data ?? 0).getTime() - new Date(a.data ?? 0).getTime(),
             ),
-        [transacoes],
+        [safeTransacoes],
     );
 
     const handleCreate = async () => {
         setSubmitting(true);
         setActionError(undefined);
         try {
-            const created = await transactionService.create({
-                userUuid: form.userUuid,
-                sorteioUuid: form.sorteioUuid || undefined,
-                bilheteUuid: form.bilheteUuid || undefined,
+            const userUuid = form.userUuid?.trim();
+            if (!userUuid) {
+                setActionError("Selecione o cliente responsável pela transação.");
+                setSubmitting(false);
+                return;
+            }
+            const sorteioUuid = form.sorteioUuid?.trim();
+            const bilheteUuid = form.bilheteUuid?.trim();
+            const payload = {
                 tipo: form.tipo,
                 valor: Number(form.valor),
                 metodoPagamento: form.metodoPagamento,
-                referencia: form.referencia || undefined,
+                referencia: form.referencia?.trim() || undefined,
                 data: form.data ? new Date(form.data).toISOString() : undefined,
-            });
-            setTransacoes([created, ...transacoes]);
+                user: userUuid,
+                sorteio: sorteioUuid || null,
+                bilhete: bilheteUuid || null,
+            };
+            const { data: created } = await api.post<Transacao>("/transacao/criar", payload);
+            setTransacoes([created, ...safeTransacoes]);
             setOpen(false);
             setForm(INITIAL_STATE);
         } catch (err) {
@@ -105,8 +119,8 @@ export default function AdminTransactionsSection() {
     const handleDelete = async (uuid: string) => {
         if (!confirm("Remover transação?")) return;
         try {
-            await transactionService.remove(uuid);
-            setTransacoes(transacoes.filter((t) => t.uuid !== uuid));
+            await api.post(`/transacao/delete/${uuid}`);
+            setTransacoes(safeTransacoes.filter((t) => t.uuid !== uuid));
         } catch (err) {
             console.error("Erro ao remover transação", err);
             setActionError("Não foi possível remover a transação.");
@@ -115,7 +129,9 @@ export default function AdminTransactionsSection() {
 
     return (
         <Stack spacing={3}>
-            {error && <Alert severity="error">{error}</Alert>}
+            {(error || actionError) && (
+                <Alert severity="error">{actionError ?? error}</Alert>
+            )}
 
             <Paper sx={{ p: 3, borderRadius: 3 }}>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
@@ -168,19 +184,23 @@ export default function AdminTransactionsSection() {
                                 ) : (
                                     sortedTransacoes.map((transacao) => (
                                         <TableRow key={transacao.uuid}>
-                                            <TableCell>{formatDateTime(transacao.data)}</TableCell>
+                                            <TableCell>{transacao.data ? formatDateTime(transacao.data) : "—"}</TableCell>
                                             <TableCell>{transacao.user?.nome ?? "—"}</TableCell>
-                                            <TableCell>{TIPO_LABEL[transacao.tipo]}</TableCell>
+                                            <TableCell>{TIPO_LABEL[transacao.tipo] ?? "—"}</TableCell>
                                             <TableCell sx={{ color: transacao.tipo === "ENTRADA" ? "success.main" : "error.main" }}>
                                                 {transacao.tipo === "ENTRADA" ? "+" : "-"}
                                                 {formatCurrency(transacao.valor)}
                                             </TableCell>
-                                            <TableCell>{METODO_LABEL[transacao.metodoPagamento]}</TableCell>
+                                            <TableCell>{METODO_LABEL[transacao.metodoPagamento] ?? "—"}</TableCell>
                                             <TableCell>{transacao.referencia ?? "—"}</TableCell>
                                             <TableCell>{transacao.sorteio?.titulo ?? "—"}</TableCell>
                                             <TableCell>{transacao.bilhete ? `#${transacao.bilhete.numero}` : "—"}</TableCell>
                                             <TableCell align="right">
-                                                <IconButton color="error" onClick={() => handleDelete(transacao.uuid)}>
+                                                <IconButton
+                                                    color="error"
+                                                    disabled={!transacao.uuid}
+                                                    onClick={() => transacao.uuid && handleDelete(transacao.uuid)}
+                                                >
                                                     <DeleteIcon />
                                                 </IconButton>
                                             </TableCell>
@@ -206,8 +226,8 @@ export default function AdminTransactionsSection() {
                                 fullWidth
                                 required
                             >
-                                {users.map((user) => (
-                                    <MenuItem key={user.uuid} value={user.uuid}>
+                                {safeUsers.map((user) => (
+                                    <MenuItem key={user.uuid ?? user.email} value={user.uuid}>
                                         {user.nome} • {user.email}
                                     </MenuItem>
                                 ))}
@@ -269,7 +289,7 @@ export default function AdminTransactionsSection() {
                                 <MenuItem value="">
                                     <em>Não vinculado</em>
                                 </MenuItem>
-                                {sorteios.map((sorteio) => (
+                                {safeSorteios.map((sorteio) => (
                                     <MenuItem key={sorteio.uuid} value={sorteio.uuid}>
                                         {sorteio.titulo}
                                     </MenuItem>
@@ -287,11 +307,14 @@ export default function AdminTransactionsSection() {
                                 <MenuItem value="">
                                     <em>Não vinculado</em>
                                 </MenuItem>
-                                {tickets.map((ticket) => (
-                                    <MenuItem key={ticket.uuid} value={ticket.uuid}>
-                                        #{ticket.numero} • {ticket.user?.nome ?? "—"}
-                                    </MenuItem>
-                                ))}
+                                {safeTickets.map((ticket) => {
+                                    const nomeCliente = ticket.nome?.trim() || ticket.user?.nome || "—";
+                                    return (
+                                        <MenuItem key={ticket.uuid} value={ticket.uuid}>
+                                            #{ticket.numero} • {nomeCliente}
+                                        </MenuItem>
+                                    );
+                                })}
                             </TextField>
                         </Grid>
                         <Grid item xs={12} md={4}>
