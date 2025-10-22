@@ -25,6 +25,8 @@ import {
     TableRow,
     TextField,
     Typography,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -67,6 +69,8 @@ export default function AdminUsersSection() {
     const [submitting, setSubmitting] = useState(false);
     const [actionError, setActionError] = useState<string>();
     const [listError, setListError] = useState<string>();
+    const theme = useTheme();
+    const isCompactLayout = useMediaQuery(theme.breakpoints.down("md"));
 
     const safeUsers = useMemo(
         () => (Array.isArray(users) ? users : []),
@@ -189,7 +193,7 @@ export default function AdminUsersSection() {
                 </Alert>
             )}
 
-            <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: "12px" }}>
                 <Stack
                     direction={{ xs: "column", md: "row" }}
                     spacing={2}
@@ -215,12 +219,105 @@ export default function AdminUsersSection() {
                 </Stack>
             </Paper>
 
-            <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>
+            <Paper sx={{ borderRadius: "12px", overflow: { xs: "visible", md: "hidden" } }}>
                 {loading ? (
-                    <Box sx={{ p: 3 }}>
+                    <Box sx={{ p: { xs: 2, md: 3 } }}>
                         <Skeleton variant="rounded" height={48} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={48} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={48} />
+                    </Box>
+                ) : isCompactLayout ? (
+                    <Box sx={{ p: 2 }}>
+                        {sortedUsers.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary">
+                                Nenhum usuário cadastrado até o momento.
+                            </Typography>
+                        ) : (
+                            <Stack spacing={2}>
+                                {sortedUsers.map((user) => {
+                                    const roleLabel = ROLE_LABEL[(user.role ?? "CLIENTE") as UserRole] ?? "—";
+                                    return (
+                                        <Box
+                                            key={user.uuid}
+                                            sx={{
+                                                border: 1,
+                                                borderColor: "divider",
+                                                borderRadius: "10px",
+                                                p: 2,
+                                                bgcolor: "background.paper",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: 1.5,
+                                            }}
+                                        >
+                                            <Stack spacing={1}>
+                                                <Stack spacing={0.5}>
+                                                    <Typography fontWeight={600}>{user.nome ?? "—"}</Typography>
+                                                    {user.cpf && (
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            CPF: {user.cpf}
+                                                        </Typography>
+                                                    )}
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {user.email ?? "—"}
+                                                    </Typography>
+                                                </Stack>
+                                                <Stack direction="row" spacing={1} alignItems="center">
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Perfil:
+                                                    </Typography>
+                                                    <Chip
+                                                        label={roleLabel}
+                                                        color={user.role === "ADMIN" ? "secondary" : "default"}
+                                                        size="small"
+                                                    />
+                                                </Stack>
+                                                <Stack spacing={1}>
+                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Telefone:
+                                                        </Typography>
+                                                        <Typography variant="body2">{user.telefone || "—"}</Typography>
+                                                    </Stack>
+                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Saldo:
+                                                        </Typography>
+                                                        <Typography variant="body2">
+                                                            {formatCurrency(user.saldo ?? 0)}
+                                                        </Typography>
+                                                    </Stack>
+                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Criado em:
+                                                        </Typography>
+                                                        <Typography variant="body2">
+                                                            {formatDateTime(user.createdAt)}
+                                                        </Typography>
+                                                    </Stack>
+                                                </Stack>
+                                            </Stack>
+                                            <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                                <IconButton
+                                                    color="primary"
+                                                    size="small"
+                                                    onClick={() => openDialog(user)}
+                                                >
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                                <IconButton
+                                                    color="error"
+                                                    size="small"
+                                                    onClick={() => handleDelete(user.uuid)}
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Stack>
+                                        </Box>
+                                    );
+                                })}
+                            </Stack>
+                        )}
                     </Box>
                 ) : (
                     <TableContainer>

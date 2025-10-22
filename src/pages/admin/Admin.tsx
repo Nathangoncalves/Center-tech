@@ -120,7 +120,7 @@ export default function Admin() {
             <CssBaseline />
             <AdminDataProvider>
                 <AdminLayout
-                    title="Gestão Centertech"
+                    title=""
                     subtitle="Painel centralizado para administrar sorteios, finanças e usuários."
                     sections={sections}
                     activeSectionId={activeSection}

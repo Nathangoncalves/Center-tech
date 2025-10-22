@@ -87,7 +87,7 @@ export default function AdminOverviewSection() {
 
                     return (
                         <Grid key={key} size={{ xs: 12, md: 3 }}>
-                            <Paper sx={{ p: 3, borderRadius: 3 }}>
+                            <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: "12px" }}>
                                 <Stack spacing={1.5}>
                                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                                         <Typography variant="body2" color="text.secondary">
@@ -111,7 +111,7 @@ export default function AdminOverviewSection() {
 
             <Grid container spacing={3}>
                 <Grid size={{ xs: 12, lg: 7 }}>
-                    <Paper sx={{ p: 3, borderRadius: 3 }}>
+                    <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: "12px" }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                             <Typography variant="h6" fontWeight={800}>
                                 Sorteios em destaque
@@ -169,7 +169,7 @@ export default function AdminOverviewSection() {
                 </Grid>
 
                 <Grid size={{ xs: 12, lg: 5 }}>
-                    <Paper sx={{ p: 3, borderRadius: 3 }}>
+                    <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: "12px" }}>
                         <Typography variant="h6" fontWeight={800} sx={{ mb: 2 }}>
                             Últimas transações
                         </Typography>
@@ -224,7 +224,7 @@ export default function AdminOverviewSection() {
                         )}
                     </Paper>
 
-                    <Paper sx={{ p: 3, borderRadius: 3, mt: 3 }}>
+                    <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: "12px", mt: 3 }}>
                         <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
                             Taxa média de venda
                         </Typography>

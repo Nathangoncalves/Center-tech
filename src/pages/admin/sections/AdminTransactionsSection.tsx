@@ -21,6 +21,8 @@ import {
     TableRow,
     TextField,
     Typography,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -68,6 +70,8 @@ export default function AdminTransactionsSection() {
     const [form, setForm] = useState<TransactionFormState>(INITIAL_STATE);
     const [submitting, setSubmitting] = useState(false);
     const [actionError, setActionError] = useState<string>();
+    const theme = useTheme();
+    const isCompactLayout = useMediaQuery(theme.breakpoints.down("md"));
 
     const safeTransacoes = Array.isArray(transacoes) ? transacoes : [];
     const safeUsers = Array.isArray(users) ? users : [];
@@ -133,7 +137,7 @@ export default function AdminTransactionsSection() {
                 <Alert severity="error">{actionError ?? error}</Alert>
             )}
 
-            <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: "12px" }}>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
                     <Stack spacing={0.5}>
                         <Typography variant="h6" fontWeight={800}>
@@ -149,12 +153,103 @@ export default function AdminTransactionsSection() {
                 </Stack>
             </Paper>
 
-            <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>
+            <Paper sx={{ borderRadius: "12px", overflow: { xs: "visible", md: "hidden" } }}>
                 {loading ? (
-                    <Box sx={{ p: 3 }}>
+                    <Box sx={{ p: { xs: 2, md: 3 } }}>
                         <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={52} />
+                    </Box>
+                ) : isCompactLayout ? (
+                    <Box sx={{ p: 2 }}>
+                        {sortedTransacoes.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary">
+                                Nenhuma transação registrada.
+                            </Typography>
+                        ) : (
+                            <Stack spacing={2}>
+                                {sortedTransacoes.map((transacao) => {
+                                    const valueColor = transacao.tipo === "ENTRADA" ? "success.main" : "error.main";
+                                    return (
+                                        <Box
+                                            key={transacao.uuid}
+                                            sx={{
+                                                border: 1,
+                                                borderColor: "divider",
+                                                borderRadius: "10px",
+                                                p: 2,
+                                                bgcolor: "background.paper",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: 1.5,
+                                            }}
+                                        >
+                                            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                                <Stack spacing={0.25}>
+                                                    <Typography fontWeight={700}>
+                                                        {transacao.data ? formatDateTime(transacao.data) : "—"}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {transacao.user?.nome ?? "—"}
+                                                    </Typography>
+                                                </Stack>
+                                                <IconButton
+                                                    color="error"
+                                                    size="small"
+                                                    disabled={!transacao.uuid}
+                                                    onClick={() => transacao.uuid && handleDelete(transacao.uuid)}
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Stack>
+                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Tipo:
+                                                </Typography>
+                                                <Typography variant="body2">{TIPO_LABEL[transacao.tipo] ?? "—"}</Typography>
+                                            </Stack>
+                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Valor:
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ color: valueColor, fontWeight: 700 }}>
+                                                    {transacao.tipo === "ENTRADA" ? "+" : "-"}
+                                                    {formatCurrency(transacao.valor)}
+                                                </Typography>
+                                            </Stack>
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Método de pagamento
+                                                </Typography>
+                                                <Typography variant="body2">
+                                                    {METODO_LABEL[transacao.metodoPagamento] ?? "—"}
+                                                </Typography>
+                                            </Stack>
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Referência
+                                                </Typography>
+                                                <Typography variant="body2">{transacao.referencia ?? "—"}</Typography>
+                                            </Stack>
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Sorteio
+                                                </Typography>
+                                                <Typography variant="body2">{transacao.sorteio?.titulo ?? "—"}</Typography>
+                                            </Stack>
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Bilhete
+                                                </Typography>
+                                                <Typography variant="body2">
+                                                    {transacao.bilhete ? `#${transacao.bilhete.numero}` : "—"}
+                                                </Typography>
+                                            </Stack>
+                                        </Box>
+                                    );
+                                })}
+                            </Stack>
+                        )}
                     </Box>
                 ) : (
                     <TableContainer>

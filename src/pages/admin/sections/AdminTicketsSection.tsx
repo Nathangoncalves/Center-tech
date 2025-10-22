@@ -23,6 +23,8 @@ import {
     TableRow,
     TextField,
     Typography,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -53,6 +55,8 @@ export default function AdminTicketsSection() {
     const [form, setForm] = useState<TicketFormState>(INITIAL_STATE);
     const [submitting, setSubmitting] = useState(false);
     const [actionError, setActionError] = useState<string>();
+    const theme = useTheme();
+    const isCompactLayout = useMediaQuery(theme.breakpoints.down("md"));
 
     const sortedTickets = useMemo(
         () =>
@@ -120,8 +124,13 @@ export default function AdminTicketsSection() {
         <Stack spacing={3}>
             {error && <Alert severity="error">{error}</Alert>}
 
-            <Paper sx={{ p: 3, borderRadius: 3 }}>
-                <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
+            <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: "12px" }}>
+                <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={2}
+                    justifyContent="space-between"
+                    alignItems={{ xs: "stretch", md: "center" }}
+                >
                     <Stack spacing={0.5}>
                         <Typography variant="h6" fontWeight={800}>
                             Bilhetes emitidos
@@ -136,12 +145,81 @@ export default function AdminTicketsSection() {
                 </Stack>
             </Paper>
 
-            <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>
+            <Paper sx={{ borderRadius: "12px", overflow: { xs: "visible", md: "hidden" } }}>
                 {loading ? (
-                    <Box sx={{ p: 3 }}>
+                    <Box sx={{ p: { xs: 2, md: 3 } }}>
                         <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={52} />
+                    </Box>
+                ) : isCompactLayout ? (
+                    <Box sx={{ p: 2 }}>
+                        {sortedTickets.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary">
+                                Nenhum bilhete registrado até o momento.
+                            </Typography>
+                        ) : (
+                            <Stack spacing={2}>
+                                {sortedTickets.map((ticket) => {
+                                    const nomeCliente = ticket.nomeCliente?.trim() || ticket.user?.nome || "—";
+                                    const nomeSorteio = ticket.nomeSorteio?.trim() || ticket.sorteio?.titulo || "—";
+                                    return (
+                                        <Box
+                                            key={ticket.uuid ?? `${ticket.numero}-${nomeCliente}`}
+                                            sx={{
+                                                border: 1,
+                                                borderColor: "divider",
+                                                borderRadius: "10px",
+                                                p: 2,
+                                                bgcolor: "background.paper",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: 1.5,
+                                            }}
+                                        >
+                                            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                                <Typography fontWeight={700}>#{ticket.numero}</Typography>
+                                                <IconButton
+                                                    color="error"
+                                                    size="small"
+                                                    onClick={() => ticket.uuid && handleDelete(ticket.uuid)}
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Stack>
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Cliente
+                                                </Typography>
+                                                <Typography variant="body2">{nomeCliente}</Typography>
+                                            </Stack>
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Sorteio
+                                                </Typography>
+                                                <Typography variant="body2">{nomeSorteio}</Typography>
+                                            </Stack>
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Data da compra
+                                                </Typography>
+                                                <Typography variant="body2">{formatDateTime(ticket.dataCompra)}</Typography>
+                                            </Stack>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        checked={ticket.pago}
+                                                        onChange={(e) => handleTogglePago(ticket, e.target.checked)}
+                                                    />
+                                                }
+                                                label="Pagamento confirmado"
+                                                sx={{ ml: -1 }}
+                                            />
+                                        </Box>
+                                    );
+                                })}
+                            </Stack>
+                        )}
                     </Box>
                 ) : (
                     <TableContainer>

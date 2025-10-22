@@ -21,6 +21,8 @@ import {
     TableRow,
     TextField,
     Typography,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -54,6 +56,8 @@ export default function AdminMediaSection() {
     const [form, setForm] = useState<MediaFormState>(INITIAL_STATE);
     const [submitting, setSubmitting] = useState(false);
     const [actionError, setActionError] = useState<string>();
+    const theme = useTheme();
+    const isCompactLayout = useMediaQuery(theme.breakpoints.down("md"));
 
     const sortedMidias = useMemo(
         () =>
@@ -135,7 +139,7 @@ export default function AdminMediaSection() {
         <Stack spacing={3}>
             {error && <Alert severity="error">{error}</Alert>}
 
-            <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: "12px" }}>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
                     <Stack spacing={0.5}>
                         <Typography variant="h6" fontWeight={800}>
@@ -151,12 +155,62 @@ export default function AdminMediaSection() {
                 </Stack>
             </Paper>
 
-            <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>
+            <Paper sx={{ borderRadius: "12px", overflow: { xs: "visible", md: "hidden" } }}>
                 {loading ? (
-                    <Box sx={{ p: 3 }}>
+                    <Box sx={{ p: { xs: 2, md: 3 } }}>
                         <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={52} />
+                    </Box>
+                ) : isCompactLayout ? (
+                    <Box sx={{ p: 2 }}>
+                        {sortedMidias.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary">
+                                Nenhuma mídia cadastrada ainda.
+                            </Typography>
+                        ) : (
+                            <Stack spacing={2}>
+                                {sortedMidias.map((media) => (
+                                    <Box
+                                        key={media.uuid}
+                                        sx={{
+                                            border: 1,
+                                            borderColor: "divider",
+                                            borderRadius: "10px",
+                                            p: 2,
+                                            bgcolor: "background.paper",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: 1.5,
+                                        }}
+                                    >
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                            <Typography fontWeight={700}>{TIPO_LABEL[media.tipo]}</Typography>
+                                            <Stack direction="row" spacing={1}>
+                                                <IconButton color="primary" size="small" onClick={() => openDialog(media)}>
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                                <IconButton color="error" size="small" onClick={() => handleDelete(media.uuid)}>
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Stack>
+                                        </Stack>
+                                        <Stack spacing={0.5}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                URL
+                                            </Typography>
+                                            <Typography variant="body2">{media.url}</Typography>
+                                        </Stack>
+                                        <Stack spacing={0.5}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Sorteio
+                                            </Typography>
+                                            <Typography variant="body2">{media.sorteio?.titulo ?? "—"}</Typography>
+                                        </Stack>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        )}
                     </Box>
                 ) : (
                     <TableContainer>

@@ -23,6 +23,8 @@ import {
     TableRow,
     TextField,
     Typography,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -64,6 +66,8 @@ export default function AdminRafflesSection() {
     const [form, setForm] = useState<SorteioFormState>(INITIAL_STATE);
     const [submitting, setSubmitting] = useState(false);
     const [actionError, setActionError] = useState<string>();
+    const theme = useTheme();
+    const isCompactLayout = useMediaQuery(theme.breakpoints.down("md"));
 
     const sortedSorteios = useMemo(
         () =>
@@ -134,7 +138,7 @@ export default function AdminRafflesSection() {
         <Stack spacing={3}>
             {error && <Alert severity="error">{error}</Alert>}
 
-            <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: "12px" }}>
                 <Stack
                     direction={{ xs: "column", md: "row" }}
                     spacing={2}
@@ -160,12 +164,108 @@ export default function AdminRafflesSection() {
                 </Stack>
             </Paper>
 
-            <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>
+            <Paper sx={{ borderRadius: "12px", overflow: { xs: "visible", md: "hidden" } }}>
                 {loading ? (
-                    <Box sx={{ p: 3 }}>
+                    <Box sx={{ p: { xs: 2, md: 3 } }}>
                         <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
                         <Skeleton variant="rounded" height={52} />
+                    </Box>
+                ) : isCompactLayout ? (
+                    <Box sx={{ p: 2 }}>
+                        {sortedSorteios.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary">
+                                Nenhum sorteio cadastrado até o momento.
+                            </Typography>
+                        ) : (
+                            <Stack spacing={2}>
+                                {sortedSorteios.map((sorteio) => (
+                                    <Box
+                                        key={sorteio.uuid}
+                                        sx={{
+                                            border: 1,
+                                            borderColor: "divider",
+                                            borderRadius: "10px",
+                                            p: 2,
+                                            bgcolor: "background.paper",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: 1.5,
+                                        }}
+                                    >
+                                        <Stack spacing={0.75}>
+                                            <Typography fontWeight={600}>{sorteio.titulo}</Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {sorteio.descricao}
+                                            </Typography>
+                                        </Stack>
+                                        <Stack spacing={1} direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Status
+                                            </Typography>
+                                            <Select
+                                                value={sorteio.status}
+                                                size="small"
+                                                onChange={(event) =>
+                                                    handleStatusChange(sorteio.uuid, event.target.value as SorteioStatus)
+                                                }
+                                                sx={{ minWidth: { sm: 160 }, maxWidth: { xs: "100%", sm: 220 } }}
+                                            >
+                                                {Object.entries(STATUS_LABEL).map(([value, label]) => (
+                                                    <MenuItem key={value} value={value}>
+                                                        {label}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </Stack>
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Typography variant="body2" color="text.secondary">
+                                                Bilhetes:
+                                            </Typography>
+                                            <Chip
+                                                label={`${sorteio.qtdVendidos}/${sorteio.qtdTotalBilhetes}`}
+                                                color="primary"
+                                                variant="outlined"
+                                                size="small"
+                                            />
+                                        </Stack>
+                                        <Stack spacing={1}>
+                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Preço:
+                                                </Typography>
+                                                <Typography variant="body2">{formatCurrency(sorteio.precoBilhete)}</Typography>
+                                            </Stack>
+                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Agendado:
+                                                </Typography>
+                                                <Typography variant="body2">{formatDate(sorteio.dataAgendada)}</Typography>
+                                            </Stack>
+                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Encerramento:
+                                                </Typography>
+                                                <Typography variant="body2">
+                                                    {formatDateTime(sorteio.dataEncerramento)}
+                                                </Typography>
+                                            </Stack>
+                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Item:
+                                                </Typography>
+                                                <Typography variant="body2">{sorteio.item?.nome ?? "—"}</Typography>
+                                            </Stack>
+                                        </Stack>
+                                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                            <IconButton color="error" size="small" onClick={() => handleDelete(sorteio.uuid)}>
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        </Stack>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        )}
                     </Box>
                 ) : (
                     <TableContainer>

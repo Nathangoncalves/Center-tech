@@ -17,6 +17,8 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
+import logoDark from "../../assets/img/png/logo-dark.png";
+import logoLight from "../../assets/img/png/logo-white.png";
 
 export interface AdminSection {
     id: string;
@@ -48,6 +50,7 @@ export default function AdminLayout({
 }: AdminLayoutProps) {
     const theme = useTheme();
     const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
+    const logoSrc = theme.palette.mode === "dark" ? logoLight : logoDark;
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const toggleDrawer = () => setMobileOpen((prev) => !prev);
@@ -115,13 +118,29 @@ export default function AdminLayout({
                     bgcolor: "background.paper",
                 }}
             >
-                <Toolbar sx={{ gap: 2, minHeight: 80 }}>
-                    {!isDesktop && (
-                        <IconButton color="inherit" onClick={toggleDrawer}>
-                            <MenuIcon />
-                        </IconButton>
-                    )}
-                    <Box sx={{ flex: 1 }}>
+                <Toolbar
+                    sx={{
+                        gap: { xs: 1.5, md: 2 },
+                        minHeight: 80,
+                        flexWrap: { xs: "wrap", md: "nowrap" },
+                        alignItems: "center",
+                        py: { xs: 1.5, md: 0 },
+                    }}
+                >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexShrink: 0 }}>
+                        {!isDesktop && (
+                            <IconButton color="inherit" onClick={toggleDrawer}>
+                                <MenuIcon />
+                            </IconButton>
+                        )}
+                        <Box
+                            component="img"
+                            alt="Centertech"
+                            src={logoSrc}
+                            sx={{ height: 36, width: "auto" }}
+                        />
+                    </Box>
+                    <Box sx={{ flexGrow: 1, minWidth: 200 }}>
                         <Typography variant="h5" fontWeight={800}>
                             {title}
                         </Typography>
@@ -131,7 +150,18 @@ export default function AdminLayout({
                             </Typography>
                         )}
                     </Box>
-                    {headerActions}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            gap: 1,
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                            justifyContent: { xs: "flex-end", md: "flex-start" },
+                            width: { xs: "100%", md: "auto" },
+                        }}
+                    >
+                        {headerActions}
+                    </Box>
                 </Toolbar>
             </AppBar>
 

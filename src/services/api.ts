@@ -59,6 +59,17 @@ export function setAuthToken(token: string | null, persist = true) {
             // Ignore storage errors (e.g., private mode)
         }
     }
+    try {
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(
+                new CustomEvent("auth:changed", {
+                    detail: { token },
+                }),
+            );
+        }
+    } catch {
+        // Ignore dispatch errors (e.g., during SSR)
+    }
 }
 
 export function getAuthToken(): string | null {
