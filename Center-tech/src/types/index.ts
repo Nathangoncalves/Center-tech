@@ -7,7 +7,15 @@ export const UserRole = {
     CLIENTE: "CLIENTE",
 } as const;
 export type UserRole = typeof UserRole[keyof typeof UserRole];
-
+export interface Ticket {
+    numero: number;
+    nome?: string;
+    nomeSorteio?: string;
+    dataCompra: string;
+    pago: boolean;
+    user?: User | null;
+    sorteio?: Sorteio | null;
+}
 export const SorteioStatus = {
     AGENDADO: "AGENDADO",
     ABERTO: "ABERTO",
@@ -84,6 +92,8 @@ export interface Bilhete extends BaseEntity {
     numero: number;
     dataCompra: string;
     pago: boolean;
+    nome?: string;
+    nomeSorteio?: string;
     user?: Pick<User, "uuid" | "nome" | "email">;
     sorteio?: Pick<Sorteio, "uuid" | "titulo">;
 }

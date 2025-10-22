@@ -18,8 +18,15 @@ export default function Home() {
         let active = true;
         (async () => {
             try {
-                const { data } = await api.get<Sorteio[]>("/sorteio");
-                if (active) setSorteios(data);
+                const { data } = await api.get<(Sorteio[] | { content?: Sorteio[] } | null)>("/sorteio");
+                if (!active) return;
+                const normalized =
+                    Array.isArray(data)
+                        ? data
+                        : Array.isArray((data as { content?: Sorteio[] } | null | undefined)?.content)
+                            ? ((data as { content?: Sorteio[] }).content ?? [])
+                            : [];
+                setSorteios(normalized);
             } catch (error) {
                 console.error("Erro ao carregar sorteios", error);
             } finally {

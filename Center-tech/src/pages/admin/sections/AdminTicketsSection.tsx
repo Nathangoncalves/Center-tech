@@ -66,20 +66,21 @@ export default function AdminTicketsSection() {
         setSubmitting(true);
         setActionError(undefined);
         try {
+            const userUuid = form.userUuid?.trim();
+            const sorteioUuid = form.sorteioUuid?.trim();
+            if (!userUuid || !sorteioUuid) {
+                setActionError("Selecione um cliente e um sorteio para emitir o bilhete.");
+                setSubmitting(false);
+                return;
+            }
             const payload = {
                 numero: Number(form.numero),
-                userUuid: form.userUuid,
-                sorteioUuid: form.sorteioUuid,
                 dataCompra: new Date(form.dataCompra).toISOString(),
                 pago: form.pago,
+                user: userUuid,
+                sorteio: sorteioUuid,
             };
-            const { data: created } = await api.post<Ticket>("/bilhete/criar", {
-                numero: payload.numero,
-                dataCompra: payload.dataCompra,
-                pago: payload.pago,
-                user: { uuid: payload.userUuid },
-                sorteio: { uuid: payload.sorteioUuid },
-            });
+            const { data: created } = await api.post<Ticket>("/bilhete/criar", payload);
             setTickets([created, ...tickets]);
             setOpen(false);
             setForm(INITIAL_STATE);
@@ -165,25 +166,29 @@ export default function AdminTicketsSection() {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    sortedTickets.map((ticket) => (
-                                        <TableRow key={ticket.uuid}>
-                                            <TableCell>#{ticket.numero}</TableCell>
-                                            <TableCell>{ticket.user?.nome ?? "—"}</TableCell>
-                                            <TableCell>{ticket.sorteio?.titulo ?? "—"}</TableCell>
-                                            <TableCell>{formatDateTime(ticket.dataCompra)}</TableCell>
-                                            <TableCell>
-                                                <Checkbox
-                                                    checked={ticket.pago}
-                                                    onChange={(e) => handleTogglePago(ticket, e.target.checked)}
-                                                />
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <IconButton color="error" onClick={() => handleDelete(ticket.uuid)}>
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
+                                    sortedTickets.map((ticket) => {
+                                        const nomeCliente = ticket.nome?.trim() || ticket.user?.nome || "—";
+                                        const nomeSorteio = ticket.nomeSorteio?.trim() || ticket.sorteio?.titulo || "—";
+                                        return (
+                                            <TableRow key={ticket.uuid ?? `${ticket.numero}-${nomeCliente}`}>
+                                                <TableCell>#{ticket.numero}</TableCell>
+                                                <TableCell>{nomeCliente}</TableCell>
+                                                <TableCell>{nomeSorteio}</TableCell>
+                                                <TableCell>{formatDateTime(ticket.dataCompra)}</TableCell>
+                                                <TableCell>
+                                                    <Checkbox
+                                                        checked={ticket.pago}
+                                                        onChange={(e) => handleTogglePago(ticket, e.target.checked)}
+                                                    />
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                    <IconButton color="error" onClick={() => ticket.uuid && handleDelete(ticket.uuid)}>
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
                                 )}
                             </TableBody>
                         </Table>

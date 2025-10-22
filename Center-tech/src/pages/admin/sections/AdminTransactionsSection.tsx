@@ -86,26 +86,25 @@ export default function AdminTransactionsSection() {
         setSubmitting(true);
         setActionError(undefined);
         try {
+            const userUuid = form.userUuid?.trim();
+            if (!userUuid) {
+                setActionError("Selecione o cliente responsável pela transação.");
+                setSubmitting(false);
+                return;
+            }
+            const sorteioUuid = form.sorteioUuid?.trim();
+            const bilheteUuid = form.bilheteUuid?.trim();
             const payload = {
-                userUuid: form.userUuid,
-                sorteioUuid: form.sorteioUuid || undefined,
-                bilheteUuid: form.bilheteUuid || undefined,
                 tipo: form.tipo,
                 valor: Number(form.valor),
                 metodoPagamento: form.metodoPagamento,
-                referencia: form.referencia || undefined,
+                referencia: form.referencia?.trim() || undefined,
                 data: form.data ? new Date(form.data).toISOString() : undefined,
+                user: userUuid,
+                sorteio: sorteioUuid || null,
+                bilhete: bilheteUuid || null,
             };
-            const { data: created } = await api.post<Transacao>("/transacao/criar", {
-                tipo: payload.tipo,
-                valor: payload.valor,
-                metodoPagamento: payload.metodoPagamento,
-                referencia: payload.referencia,
-                data: payload.data,
-                user: { uuid: payload.userUuid },
-                sorteio: payload.sorteioUuid ? { uuid: payload.sorteioUuid } : undefined,
-                bilhete: payload.bilheteUuid ? { uuid: payload.bilheteUuid } : undefined,
-            });
+            const { data: created } = await api.post<Transacao>("/transacao/criar", payload);
             setTransacoes([created, ...safeTransacoes]);
             setOpen(false);
             setForm(INITIAL_STATE);
@@ -308,11 +307,14 @@ export default function AdminTransactionsSection() {
                                 <MenuItem value="">
                                     <em>Não vinculado</em>
                                 </MenuItem>
-                                {safeTickets.map((ticket) => (
-                                    <MenuItem key={ticket.uuid} value={ticket.uuid}>
-                                        #{ticket.numero} • {ticket.user?.nome ?? "—"}
-                                    </MenuItem>
-                                ))}
+                                {safeTickets.map((ticket) => {
+                                    const nomeCliente = ticket.nome?.trim() || ticket.user?.nome || "—";
+                                    return (
+                                        <MenuItem key={ticket.uuid} value={ticket.uuid}>
+                                            #{ticket.numero} • {nomeCliente}
+                                        </MenuItem>
+                                    );
+                                })}
                             </TextField>
                         </Grid>
                         <Grid item xs={12} md={4}>

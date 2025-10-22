@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const rawBaseUrl = ("http://localhost:8080");
+const rawBaseUrl = ("http://localhost:8081");
 const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, "");
 const baseURL = normalizedBaseUrl.endsWith("/api")
     ? normalizedBaseUrl

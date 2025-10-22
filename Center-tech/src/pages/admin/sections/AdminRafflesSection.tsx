@@ -82,12 +82,16 @@ export default function AdminRafflesSection() {
             const payload = {
                 titulo: form.titulo.trim(),
                 descricao: form.descricao.trim(),
-                precoBilhete: Number(form.precoBilhete) || 0,
-                qtdTotalBilhetes: Number(form.qtdTotalBilhetes) || 0,
                 dataAgendada: form.dataAgendada || undefined,
                 dataEncerramento: form.dataEncerramento || undefined,
                 status: form.status,
                 item: form.itemUuid ? { uuid: form.itemUuid } : undefined,
+                precoBilhete: Number(form.precoBilhete) || 0,
+                qtdTotalBilhetes: Number(form.qtdTotalBilhetes) || 0,
+                qtdTotalVendidos: 0,
+                vencedor: null,
+                bilhetes: [],
+                midias: []
             };
             const { data: created } = await api.post<Sorteio>("/sorteio/criar", payload);
             setSorteios([...sorteios, created]);

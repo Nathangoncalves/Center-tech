@@ -56,15 +56,14 @@ export default function SignupForm() {
         setLoading(true);
         try {
             await api.post(
-                "/user/criar",
+                "/main/cadastro",
                 {
                     nome: values.nome.trim(),
                     email: values.email.trim().toLowerCase(),
                     telefone: values.telefone.trim(),
                     cpf: values.cpf?.trim() || undefined,
-                    senhaHash: values.senha,
-                },
-                { params: { role: "cliente" } },
+                    senha: values.senha,
+                }
             );
 
             setOk("Cadastro realizado com sucesso! Você já pode acessar sua conta.");

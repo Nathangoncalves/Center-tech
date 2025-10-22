@@ -10,6 +10,8 @@ import {
 import api, { getAuthToken } from "../../services/api";
 import type { Item, Midia, Sorteio, Ticket, Transacao, User } from "../../types";
 
+const ensureArray = <T,>(value: T[] | null | undefined): T[] => (Array.isArray(value) ? value : []);
+
 interface AdminDataContextValue {
     loading: boolean;
     error?: string;
@@ -76,12 +78,12 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
                 api.get<Item[]>("/item", authConfig).then((res) => res.data),
                 api.get<Midia[]>("/midia", authConfig).then((res) => res.data),
             ]);
-            setUsers(usersData);
-            setSorteios(sorteiosData);
-            setTickets(ticketsData);
-            setTransacoes(transacoesData);
-            setItems(itemsData);
-            setMidias(midiasData);
+            setUsers(ensureArray(usersData));
+            setSorteios(ensureArray(sorteiosData));
+            setTickets(ensureArray(ticketsData));
+            setTransacoes(ensureArray(transacoesData));
+            setItems(ensureArray(itemsData));
+            setMidias(ensureArray(midiasData));
         } catch (err) {
             console.error("Erro ao carregar dados administrativos", err);
             setError("Não foi possível carregar os dados. Tente novamente em instantes.");

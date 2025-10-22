@@ -89,19 +89,21 @@ export default function AdminMediaSection() {
         setSubmitting(true);
         setActionError(undefined);
         try {
+            const sorteioUuid = form.sorteioUuid?.trim();
+            const sorteioPayload = sorteioUuid ? sorteioUuid : null;
             if (editing) {
                 const { data: updated } = await api.post<Midia>("/midia/update", {
                     uuid: editing.uuid,
                     url: form.url.trim(),
                     tipo: form.tipo,
-                    sorteio: form.sorteioUuid ? { uuid: form.sorteioUuid } : undefined,
+                    sorteio: sorteioPayload,
                 });
                 setMidias(midias.map((m) => (m.uuid === editing.uuid ? updated : m)));
             } else {
                 const { data: created } = await api.post<Midia>("/midia/criar", {
                     url: form.url.trim(),
                     tipo: form.tipo,
-                    sorteio: form.sorteioUuid ? { uuid: form.sorteioUuid } : undefined,
+                    sorteio: sorteioPayload,
                 });
                 setMidias([created, ...midias]);
             }
