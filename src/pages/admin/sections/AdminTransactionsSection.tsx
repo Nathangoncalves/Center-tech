@@ -1,0 +1,453 @@
+import { useMemo, useState } from "react";
+import {
+    Alert,
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Grid,
+    IconButton,
+    MenuItem,
+    Paper,
+    Skeleton,
+    Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography,
+    useMediaQuery,
+    useTheme,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import type { MetodoPagamento, TipoTransacao, Transacao } from "../../../types";
+import { useAdminData } from "../AdminDataProvider";
+import { formatCurrency, formatDateTime } from "../../../utils/formatters";
+import api from "../../../services/api";
+
+interface TransactionFormState {
+    userUuid: string;
+    sorteioUuid?: string;
+    bilheteUuid?: string;
+    tipo: TipoTransacao;
+    valor: number;
+    metodoPagamento: MetodoPagamento;
+    referencia: string;
+    data: string;
+}
+
+const INITIAL_STATE: TransactionFormState = {
+    userUuid: "",
+    sorteioUuid: "",
+    bilheteUuid: "",
+    tipo: "ENTRADA",
+    valor: 0,
+    metodoPagamento: "PIX",
+    referencia: "",
+    data: new Date().toISOString().slice(0, 16),
+};
+
+const TIPO_LABEL: Record<TipoTransacao, string> = {
+    ENTRADA: "Entrada",
+    SAIDA: "Saída",
+};
+
+const METODO_LABEL: Record<MetodoPagamento, string> = {
+    PIX: "PIX",
+    CARTAO: "Cartão",
+    SALDO: "Saldo interno",
+};
+
+export default function AdminTransactionsSection() {
+    const { transacoes, setTransacoes, users, sorteios, tickets, loading, error } = useAdminData();
+    const [open, setOpen] = useState(false);
+    const [form, setForm] = useState<TransactionFormState>(INITIAL_STATE);
+    const [submitting, setSubmitting] = useState(false);
+    const [actionError, setActionError] = useState<string>();
+    const theme = useTheme();
+    const isCompactLayout = useMediaQuery(theme.breakpoints.down("md"));
+
+    const safeTransacoes = Array.isArray(transacoes) ? transacoes : [];
+    const safeUsers = Array.isArray(users) ? users : [];
+    const safeSorteios = Array.isArray(sorteios) ? sorteios : [];
+    const safeTickets = Array.isArray(tickets) ? tickets : [];
+
+    const sortedTransacoes = useMemo(
+        () =>
+            [...safeTransacoes].sort(
+                (a, b) => new Date(b.data ?? 0).getTime() - new Date(a.data ?? 0).getTime(),
+            ),
+        [safeTransacoes],
+    );
+
+    const handleCreate = async () => {
+        setSubmitting(true);
+        setActionError(undefined);
+        try {
+            const userUuid = form.userUuid?.trim();
+            if (!userUuid) {
+                setActionError("Selecione o cliente responsável pela transação.");
+                setSubmitting(false);
+                return;
+            }
+            const sorteioUuid = form.sorteioUuid?.trim();
+            const bilheteUuid = form.bilheteUuid?.trim();
+            const payload = {
+                tipo: form.tipo,
+                valor: Number(form.valor),
+                metodoPagamento: form.metodoPagamento,
+                referencia: form.referencia?.trim() || undefined,
+                data: form.data ? new Date(form.data).toISOString() : undefined,
+                user: userUuid,
+                sorteio: sorteioUuid || null,
+                bilhete: bilheteUuid || null,
+            };
+            const { data: created } = await api.post<Transacao>("/transacao/criar", payload);
+            setTransacoes([created, ...safeTransacoes]);
+            setOpen(false);
+            setForm(INITIAL_STATE);
+        } catch (err) {
+            console.error("Erro ao registrar transação", err);
+            setActionError("Não foi possível registrar a transação. Tente novamente.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (uuid: string) => {
+        if (!confirm("Remover transação?")) return;
+        try {
+            await api.post(`/transacao/delete/${uuid}`);
+            setTransacoes(safeTransacoes.filter((t) => t.uuid !== uuid));
+        } catch (err) {
+            console.error("Erro ao remover transação", err);
+            setActionError("Não foi possível remover a transação.");
+        }
+    };
+
+    return (
+        <Stack spacing={3}>
+            {(error || actionError) && (
+                <Alert severity="error">{actionError ?? error}</Alert>
+            )}
+
+            <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: "12px" }}>
+                <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
+                    <Stack spacing={0.5}>
+                        <Typography variant="h6" fontWeight={800}>
+                            Fluxo de transações
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Controle financeiro das entradas e saídas relacionadas aos sorteios.
+                        </Typography>
+                    </Stack>
+                    <Button startIcon={<AddIcon />} variant="contained" onClick={() => setOpen(true)}>
+                        Registrar transação
+                    </Button>
+                </Stack>
+            </Paper>
+
+            <Paper sx={{ borderRadius: "12px", overflow: { xs: "visible", md: "hidden" } }}>
+                {loading ? (
+                    <Box sx={{ p: { xs: 2, md: 3 } }}>
+                        <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
+                        <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
+                        <Skeleton variant="rounded" height={52} />
+                    </Box>
+                ) : isCompactLayout ? (
+                    <Box sx={{ p: 2 }}>
+                        {sortedTransacoes.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary">
+                                Nenhuma transação registrada.
+                            </Typography>
+                        ) : (
+                            <Stack spacing={2}>
+                                {sortedTransacoes.map((transacao) => {
+                                    const valueColor = transacao.tipo === "ENTRADA" ? "success.main" : "error.main";
+                                    return (
+                                        <Box
+                                            key={transacao.uuid}
+                                            sx={{
+                                                border: 1,
+                                                borderColor: "divider",
+                                                borderRadius: "10px",
+                                                p: 2,
+                                                bgcolor: "background.paper",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: 1.5,
+                                            }}
+                                        >
+                                            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                                <Stack spacing={0.25}>
+                                                    <Typography fontWeight={700}>
+                                                        {transacao.data ? formatDateTime(transacao.data) : "—"}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {transacao.user?.nome ?? "—"}
+                                                    </Typography>
+                                                </Stack>
+                                                <IconButton
+                                                    color="error"
+                                                    size="small"
+                                                    disabled={!transacao.uuid}
+                                                    onClick={() => transacao.uuid && handleDelete(transacao.uuid)}
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Stack>
+                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Tipo:
+                                                </Typography>
+                                                <Typography variant="body2">{TIPO_LABEL[transacao.tipo] ?? "—"}</Typography>
+                                            </Stack>
+                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Valor:
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ color: valueColor, fontWeight: 700 }}>
+                                                    {transacao.tipo === "ENTRADA" ? "+" : "-"}
+                                                    {formatCurrency(transacao.valor)}
+                                                </Typography>
+                                            </Stack>
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Método de pagamento
+                                                </Typography>
+                                                <Typography variant="body2">
+                                                    {METODO_LABEL[transacao.metodoPagamento] ?? "—"}
+                                                </Typography>
+                                            </Stack>
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Referência
+                                                </Typography>
+                                                <Typography variant="body2">{transacao.referencia ?? "—"}</Typography>
+                                            </Stack>
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Sorteio
+                                                </Typography>
+                                                <Typography variant="body2">{transacao.sorteio?.titulo ?? "—"}</Typography>
+                                            </Stack>
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Bilhete
+                                                </Typography>
+                                                <Typography variant="body2">
+                                                    {transacao.bilhete ? `#${transacao.bilhete.numero}` : "—"}
+                                                </Typography>
+                                            </Stack>
+                                        </Box>
+                                    );
+                                })}
+                            </Stack>
+                        )}
+                    </Box>
+                ) : (
+                    <TableContainer>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Data</TableCell>
+                                    <TableCell>Cliente</TableCell>
+                                    <TableCell>Tipo</TableCell>
+                                    <TableCell>Valor</TableCell>
+                                    <TableCell>Método</TableCell>
+                                    <TableCell>Referência</TableCell>
+                                    <TableCell>Sorteio</TableCell>
+                                    <TableCell>Bilhete</TableCell>
+                                    <TableCell align="right">Ações</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {sortedTransacoes.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={9}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Nenhuma transação registrada.
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    sortedTransacoes.map((transacao) => (
+                                        <TableRow key={transacao.uuid}>
+                                            <TableCell>{transacao.data ? formatDateTime(transacao.data) : "—"}</TableCell>
+                                            <TableCell>{transacao.user?.nome ?? "—"}</TableCell>
+                                            <TableCell>{TIPO_LABEL[transacao.tipo] ?? "—"}</TableCell>
+                                            <TableCell sx={{ color: transacao.tipo === "ENTRADA" ? "success.main" : "error.main" }}>
+                                                {transacao.tipo === "ENTRADA" ? "+" : "-"}
+                                                {formatCurrency(transacao.valor)}
+                                            </TableCell>
+                                            <TableCell>{METODO_LABEL[transacao.metodoPagamento] ?? "—"}</TableCell>
+                                            <TableCell>{transacao.referencia ?? "—"}</TableCell>
+                                            <TableCell>{transacao.sorteio?.titulo ?? "—"}</TableCell>
+                                            <TableCell>{transacao.bilhete ? `#${transacao.bilhete.numero}` : "—"}</TableCell>
+                                            <TableCell align="right">
+                                                <IconButton
+                                                    color="error"
+                                                    disabled={!transacao.uuid}
+                                                    onClick={() => transacao.uuid && handleDelete(transacao.uuid)}
+                                                >
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                )}
+            </Paper>
+
+            <Dialog open={open} onClose={() => (submitting ? null : setOpen(false))} maxWidth="md" fullWidth>
+                <DialogTitle>Nova transação</DialogTitle>
+                <DialogContent dividers>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                label="Cliente"
+                                select
+                                value={form.userUuid}
+                                onChange={(e) => setForm((prev) => ({ ...prev, userUuid: e.target.value }))}
+                                fullWidth
+                                required
+                            >
+                                {safeUsers.map((user) => (
+                                    <MenuItem key={user.uuid ?? user.email} value={user.uuid}>
+                                        {user.nome} • {user.email}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            <TextField
+                                label="Tipo"
+                                select
+                                value={form.tipo}
+                                onChange={(e) => setForm((prev) => ({ ...prev, tipo: e.target.value as TipoTransacao }))}
+                                fullWidth
+                                required
+                            >
+                                {Object.entries(TIPO_LABEL).map(([value, label]) => (
+                                    <MenuItem value={value} key={value}>
+                                        {label}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            <TextField
+                                label="Valor"
+                                type="number"
+                                value={form.valor}
+                                inputProps={{ step: 0.01 }}
+                                onChange={(e) => setForm((prev) => ({ ...prev, valor: Number(e.target.value) }))}
+                                fullWidth
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                label="Método de pagamento"
+                                select
+                                value={form.metodoPagamento}
+                                onChange={(e) =>
+                                    setForm((prev) => ({ ...prev, metodoPagamento: e.target.value as MetodoPagamento }))
+                                }
+                                fullWidth
+                                required
+                            >
+                                {Object.entries(METODO_LABEL).map(([value, label]) => (
+                                    <MenuItem key={value} value={value}>
+                                        {label}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                label="Sorteio"
+                                select
+                                value={form.sorteioUuid ?? ""}
+                                onChange={(e) => setForm((prev) => ({ ...prev, sorteioUuid: e.target.value }))}
+                                fullWidth
+                            >
+                                <MenuItem value="">
+                                    <em>Não vinculado</em>
+                                </MenuItem>
+                                {safeSorteios.map((sorteio) => (
+                                    <MenuItem key={sorteio.uuid} value={sorteio.uuid}>
+                                        {sorteio.titulo}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                label="Bilhete"
+                                select
+                                value={form.bilheteUuid ?? ""}
+                                onChange={(e) => setForm((prev) => ({ ...prev, bilheteUuid: e.target.value }))}
+                                fullWidth
+                            >
+                                <MenuItem value="">
+                                    <em>Não vinculado</em>
+                                </MenuItem>
+                                {safeTickets.map((ticket) => {
+                                    const nomeCliente = ticket.nome?.trim() || ticket.user?.nome || "—";
+                                    return (
+                                        <MenuItem key={ticket.uuid} value={ticket.uuid}>
+                                            #{ticket.numero} • {nomeCliente}
+                                        </MenuItem>
+                                    );
+                                })}
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                label="Data"
+                                type="datetime-local"
+                                InputLabelProps={{ shrink: true }}
+                                value={form.data}
+                                onChange={(e) => setForm((prev) => ({ ...prev, data: e.target.value }))}
+                                fullWidth
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                label="Referência"
+                                value={form.referencia}
+                                onChange={(e) => setForm((prev) => ({ ...prev, referencia: e.target.value }))}
+                                fullWidth
+                            />
+                        </Grid>
+                    </Grid>
+
+                    {actionError && (
+                        <Alert severity="error" sx={{ mt: 2 }} onClose={() => setActionError(undefined)}>
+                            {actionError}
+                        </Alert>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpen(false)} disabled={submitting}>
+                        Cancelar
+                    </Button>
+                    <Button onClick={handleCreate} variant="contained" disabled={submitting}>
+                        {submitting ? "Salvando..." : "Registrar"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Stack>
+    );
+}

@@ -7,7 +7,19 @@ export const UserRole = {
     CLIENTE: "CLIENTE",
 } as const;
 export type UserRole = typeof UserRole[keyof typeof UserRole];
+<<<<<<< HEAD
 
+=======
+export interface Ticket {
+    numero: number;
+    nome?: string;
+    nomeSorteio?: string;
+    dataCompra: string;
+    pago: boolean;
+    user?: User | null;
+    sorteio?: Sorteio | null;
+}
+>>>>>>> main
 export const SorteioStatus = {
     AGENDADO: "AGENDADO",
     ABERTO: "ABERTO",
@@ -37,7 +49,11 @@ export const TipoMidia = {
 export type TipoMidia = typeof TipoMidia[keyof typeof TipoMidia];
 
 export interface BaseEntity {
+<<<<<<< HEAD
     id: Identifier;
+=======
+    uuid: Identifier;
+>>>>>>> main
     createdAt?: string;
     updatedAt?: string;
 }
@@ -55,13 +71,19 @@ export interface User extends BaseEntity {
 export interface Item extends BaseEntity {
     nome: string;
     descricao: string;
+<<<<<<< HEAD
     imagemUrl: string;
     valorEstimado: number;
+=======
+    valor: number;
+    imageUrl: string;
+>>>>>>> main
 }
 
 export interface Midia extends BaseEntity {
     url: string;
     tipo: TipoMidia;
+<<<<<<< HEAD
 }
 
 export interface SorteioSummary extends BaseEntity {
@@ -70,6 +92,9 @@ export interface SorteioSummary extends BaseEntity {
     precoBilhete: number;
     qtdTotalBilhetes: number;
     qtdVendidos: number;
+=======
+    sorteio?: Pick<Sorteio, "uuid" | "titulo">;
+>>>>>>> main
 }
 
 export interface Sorteio extends BaseEntity {
@@ -83,7 +108,11 @@ export interface Sorteio extends BaseEntity {
     qtdVendidos: number;
     item?: Item | null;
     midias?: Midia[];
+<<<<<<< HEAD
     vencedor?: Pick<User, "id" | "nome" | "email"> | null;
+=======
+    vencedor?: Pick<User, "uuid" | "nome" | "email"> | null;
+>>>>>>> main
     bilhetes?: Bilhete[];
 }
 
@@ -91,8 +120,15 @@ export interface Bilhete extends BaseEntity {
     numero: number;
     dataCompra: string;
     pago: boolean;
+<<<<<<< HEAD
     user?: Pick<User, "id" | "nome" | "email">;
     sorteio?: SorteioSummary;
+=======
+    nome?: string;
+    nomeSorteio?: string;
+    user?: Pick<User, "uuid" | "nome" | "email">;
+    sorteio?: Pick<Sorteio, "uuid" | "titulo">;
+>>>>>>> main
 }
 
 export interface Transacao extends BaseEntity {
@@ -101,9 +137,15 @@ export interface Transacao extends BaseEntity {
     metodoPagamento: MetodoPagamento;
     referencia?: string;
     data: string;
+<<<<<<< HEAD
     user?: Pick<User, "id" | "nome" | "email">;
     sorteio?: Pick<Sorteio, "id" | "titulo">;
     bilhete?: Pick<Bilhete, "id" | "numero">;
+=======
+    user?: Pick<User, "uuid" | "nome" | "email">;
+    sorteio?: Pick<Sorteio, "uuid" | "titulo">;
+    bilhete?: Pick<Bilhete, "uuid" | "numero">;
+>>>>>>> main
 }
 
 export interface DashboardResumo {
@@ -113,3 +155,14 @@ export interface DashboardResumo {
     totalTransacoes: number;
     faturamentoBruto: number;
 }
+<<<<<<< HEAD
+=======
+
+export interface SignupPayload {
+    nome: string;
+    email: string;
+    telefone: string;
+    cpf?: string;
+    aceitouTermos: boolean;
+}
+>>>>>>> main
