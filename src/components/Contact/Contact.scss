@@ -1,0 +1,15 @@
+.contact {
+    position: relative;
+
+    &__card {
+        border-radius: 32px;
+    }
+
+    &__content {
+        text-align: center;
+    }
+
+    &__header {
+        text-transform: none;
+    }
+}

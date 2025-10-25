@@ -1,0 +1,48 @@
+.admin-layout {
+    min-height: 100vh;
+
+    &__appbar {
+        border-bottom: 1px solid transparent;
+    }
+
+    &__toolbar {
+        min-height: 80px;
+        gap: 1rem;
+    }
+
+    &__title-wrapper {
+        flex: 1;
+    }
+
+    &__nav {
+        flex-shrink: 0;
+    }
+
+    &__content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    &__drawer {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    &__drawer-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    &__drawer-list {
+        flex: 1;
+        padding-block: 0.5rem;
+    }
+
+    &__drawer-footer {
+        padding: 1.5rem;
+    }
+}

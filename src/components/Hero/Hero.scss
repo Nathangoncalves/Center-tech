@@ -1,0 +1,30 @@
+.hero {
+    position: relative;
+    padding-inline: 0;
+    min-height: calc(100vh - 88px);
+    display: flex;
+    align-items: center;
+    padding-block: clamp(6rem, 12vw, 10rem);
+    scroll-margin-top: 88px;
+
+    &__content {
+        max-width: 900px;
+    }
+
+    &__badge {
+        width: fit-content;
+    }
+
+    &__title {
+        font-weight: 900;
+        line-height: 1.05;
+    }
+
+    &__subtitle {
+        max-width: 720px;
+    }
+
+    &__actions {
+        flex-wrap: wrap;
+    }
+}
