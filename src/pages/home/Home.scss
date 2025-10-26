@@ -1,0 +1,86 @@
+.landing {
+    background: linear-gradient(180deg, #050505 0%, #0f0f0f 100%);
+    color: #f4f4f5;
+
+    &__section {
+        padding: clamp(4rem, 8vw, 6rem) 0;
+    }
+
+    &__metrics {
+        padding: clamp(2rem, 6vw, 4rem) 0;
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    &__metric-card {
+        border-radius: 24px;
+        padding: 1.5rem;
+        background: rgba(0, 0, 0, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        color: #f4f4f5;
+        text-align: center;
+    }
+
+    &__features .landing__feature-card,
+    &__steps .landing__step-card,
+    &__testimonials .landing__testimonial-card,
+    &__cta-card {
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.02);
+        color: inherit;
+    }
+
+    &__feature-card {
+        padding: 1.5rem;
+        min-height: 180px;
+    }
+
+    &__step-card {
+        padding: 1.75rem;
+        text-align: center;
+    }
+
+    &__testimonial-card {
+        padding: 1.75rem;
+        min-height: 220px;
+    }
+
+    &__cta-card {
+        padding: clamp(2rem, 6vw, 3.5rem);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    &__skeleton {
+        border-radius: 24px;
+        height: 320px;
+        background: rgba(255, 255, 255, 0.08);
+    }
+}
+
+body[data-theme="light"] {
+    .landing {
+        background: linear-gradient(180deg, #fdfdfd 0%, #f1f2f5 100%);
+        color: #050505;
+
+        &__metrics {
+            background: rgba(5, 5, 5, 0.02);
+        }
+
+        &__metric-card,
+        &__feature-card,
+        &__step-card,
+        &__testimonial-card,
+        &__cta-card {
+            background: rgba(255, 255, 255, 0.92);
+            border-color: rgba(5, 5, 5, 0.08);
+            color: inherit;
+            box-shadow: 0 18px 35px rgba(15, 23, 42, 0.08);
+        }
+
+        &__skeleton {
+            background: rgba(5, 5, 5, 0.08);
+        }
+    }
+}
