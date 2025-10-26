@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Box, Button, Chip, Container, Stack, Typography } from "@mui/material";
+import "./Hero.scss";
 
 type HeroProps = {
     participantsCount?: number;

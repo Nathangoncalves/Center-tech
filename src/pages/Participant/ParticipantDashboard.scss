@@ -1,0 +1,15 @@
+.participant {
+    min-height: 100vh;
+    background: linear-gradient(160deg, rgba(56,189,248,0.08), rgba(249,115,22,0.08));
+
+    &__skeleton {
+        height: 320px;
+        border-radius: 16px;
+        background: rgba(255,255,255,0.04);
+    }
+
+    &__tickets {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+}

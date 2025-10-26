@@ -1,0 +1,14 @@
+.transactions-section {
+    &__loading {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1.5rem;
+    }
+
+    th {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+    }
+}
