@@ -1,5 +1,5 @@
 import type { AxiosRequestConfig } from "axios";
-import { api } from "./api";
+import api from "./api";
 
 type Config = AxiosRequestConfig;
 

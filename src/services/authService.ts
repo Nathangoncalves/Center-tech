@@ -1,4 +1,4 @@
-import { api, setAuthToken } from "./api";
+import api, { setAuthToken } from "./api";
 
 interface LoginInput {
     email: string;

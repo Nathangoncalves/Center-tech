@@ -1,36 +1,20 @@
 import axios from "axios";
 
-<<<<<<< HEAD
-const rawBaseUrl = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8080";
-=======
 const rawBaseUrl = ("http://localhost:8081");
->>>>>>> main
 const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, "");
 const baseURL = normalizedBaseUrl.endsWith("/api")
     ? normalizedBaseUrl
     : `${normalizedBaseUrl}/api`;
 
 const TOKEN_STORAGE_KEY = "ng-auth-token";
-<<<<<<< HEAD
-export const AUTH_TOKEN_CHANGED_EVENT = "ng-auth-token-changed";
-
-let inMemoryToken: string | null = null;
-
-export const api = axios.create({
-=======
 
 let inMemoryToken: string | null = null;
 
 const api = axios.create({
->>>>>>> main
     baseURL,
     headers: {
         "Content-Type": "application/json",
     },
-<<<<<<< HEAD
-});
-
-=======
     withCredentials: true,
 });
 
@@ -42,7 +26,6 @@ function applyAuthHeader(token: string | null) {
     }
 }
 
->>>>>>> main
 api.interceptors.request.use((config) => {
     const token = inMemoryToken ?? getStoredToken();
     if (token) {
@@ -64,10 +47,7 @@ api.interceptors.response.use(
 
 export function setAuthToken(token: string | null, persist = true) {
     inMemoryToken = token;
-<<<<<<< HEAD
-=======
     applyAuthHeader(token);
->>>>>>> main
     if (persist) {
         try {
             if (token) {
@@ -76,15 +56,6 @@ export function setAuthToken(token: string | null, persist = true) {
                 localStorage.removeItem(TOKEN_STORAGE_KEY);
             }
         } catch {
-<<<<<<< HEAD
-            /* storage indisponível */
-        }
-    }
-    try {
-        window.dispatchEvent(new CustomEvent(AUTH_TOKEN_CHANGED_EVENT, { detail: { token } }));
-    } catch {
-        /* ambiente sem window */
-=======
             // Ignore storage errors (e.g., private mode)
         }
     }
@@ -98,7 +69,6 @@ export function setAuthToken(token: string | null, persist = true) {
         }
     } catch {
         // Ignore dispatch errors (e.g., during SSR)
->>>>>>> main
     }
 }
 
@@ -106,13 +76,10 @@ export function getAuthToken(): string | null {
     return inMemoryToken ?? getStoredToken();
 }
 
-<<<<<<< HEAD
-=======
 export function clearAuthToken() {
     setAuthToken(null);
 }
 
->>>>>>> main
 function getStoredToken(): string | null {
     try {
         return localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -120,8 +87,6 @@ function getStoredToken(): string | null {
         return null;
     }
 }
-<<<<<<< HEAD
-=======
 
 const storedToken = getStoredToken();
 if (storedToken) {
@@ -130,4 +95,3 @@ if (storedToken) {
 }
 
 export default api;
->>>>>>> main
