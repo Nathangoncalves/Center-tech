@@ -16,6 +16,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import { useNavigate } from "react-router-dom";
 import type { Sorteio } from "../types";
+import placeholderImage from "../assets/img/raffle-placeholder.svg";
 
 const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
 const money = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -27,7 +28,7 @@ function resolveImage(sorteio: Sorteio): string {
     const itemUrl = sorteio.item?.imageUrl;
     if (itemUrl && itemUrl.trim().length > 0) return itemUrl;
 
-    return "/assets/image.png";
+    return placeholderImage;
 }
 
 const statusLabels: Record<Sorteio["status"], string> = {
