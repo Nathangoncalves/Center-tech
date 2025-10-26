@@ -204,7 +204,7 @@ export default function Home() {
                     </Container>
                 </section>
 
-                <section className="landing__section landing__cta">
+                <section id="contato" className="landing__section landing__cta">
                     <Container maxWidth="lg">
                         <Paper elevation={0} className="landing__cta-card">
                             <Stack spacing={1}>
