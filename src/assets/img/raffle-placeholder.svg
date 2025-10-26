@@ -1,0 +1,16 @@
+<svg width="800" height="450" viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#111827" />
+            <stop offset="100%" stop-color="#1f2937" />
+        </linearGradient>
+    </defs>
+    <rect width="800" height="450" rx="32" fill="url(#grad)" />
+    <g fill="none" stroke="#38bdf8" stroke-width="4" opacity="0.45">
+        <rect x="80" y="80" width="640" height="290" rx="28" />
+        <path d="M120 190h260l40 80h260" />
+    </g>
+    <text x="400" y="235" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="32" fill="#e5e7eb">
+        Visual em breve
+    </text>
+</svg>

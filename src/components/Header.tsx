@@ -58,16 +58,6 @@ const onClose = () => setAnchor(null);
         navigate("/", { replace: true });
     };
 
-    const publicLinks = useMemo(
-        () => [
-            { label: "Sorteios", href: "/#sorteios" },
-            { label: "Ganhadores", href: "/#ganhadores" },
-            { label: "Regulamento", href: "/#regulamento" },
-            { label: "Contato", href: "/#contato" },
-        ],
-        [],
-    );
-
     return (
         <AppBar
             position="sticky"
@@ -104,13 +94,6 @@ const onClose = () => setAnchor(null);
                 <Box sx={{ flexGrow: 1 }} />
 
                 <Stack direction="row" spacing={1} alignItems="center">
-                    {!isAuthenticated &&
-                        publicLinks.map(({ label, href }) => (
-                            <Button key={href} component={RouterLink} to={href} variant="text">
-                                {label}
-                            </Button>
-                        ))}
-
                     <Tooltip title="Tema">
                         <IconButton onClick={() => setMode(mode === "dark" ? "light" : "dark")}>
                             {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}

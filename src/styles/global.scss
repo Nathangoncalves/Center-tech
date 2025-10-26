@@ -20,14 +20,23 @@ html {
 body {
     margin: 0;
     font-family: tokens.$font-primary;
-    background: radial-gradient(circle at top right, color.scale(tokens.$color-accent, $alpha: -50%), transparent),
-        radial-gradient(circle at bottom left, color.scale(tokens.$color-accent-strong, $alpha: -60%), transparent),
-        tokens.$color-background-dark;
-    color: tokens.$color-text-light;
     line-height: 1.5;
+    transition: background 0.4s ease, color 0.4s ease;
 }
 
-:root {
+body[data-theme="dark"] {
+    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.12), transparent 55%),
+        radial-gradient(circle at 80% 0%, rgba(255, 255, 255, 0.05), transparent 45%),
+        linear-gradient(180deg, #050505 0%, #111111 100%);
+    color: tokens.$color-text-light;
+    color-scheme: dark;
+}
+
+body[data-theme="light"] {
+    background: radial-gradient(circle at 10% 15%, rgba(0, 0, 0, 0.05), transparent 45%),
+        radial-gradient(circle at 85% 5%, rgba(0, 0, 0, 0.04), transparent 40%),
+        linear-gradient(180deg, #fdfdfd 0%, #f2f2f4 100%);
+    color: #050505;
     color-scheme: light;
 }
 

@@ -1,0 +1,61 @@
+.participant-page {
+    min-height: 100vh;
+    background: radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.1), transparent 40%),
+        radial-gradient(circle at 85% 0%, rgba(255, 255, 255, 0.08), transparent 35%),
+        linear-gradient(180deg, #050505 0%, #0f0f0f 100%);
+    color: #f4f4f5;
+
+    &__hero {
+        padding: clamp(2rem, 5vw, 3rem);
+        border-radius: 32px;
+        background: rgba(0, 0, 0, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    &__metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+    }
+
+    &__metric {
+        padding: 1.2rem;
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    &__skeleton {
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.08);
+        height: 320px;
+    }
+
+    &__tickets {
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    @media (prefers-color-scheme: light) {
+        background: radial-gradient(circle at 15% 10%, rgba(0, 0, 0, 0.08), transparent 45%),
+            radial-gradient(circle at 85% 5%, rgba(0, 0, 0, 0.07), transparent 35%),
+            linear-gradient(180deg, #fefefe 0%, #e8e8ed 100%);
+        color: #050505;
+
+        &__hero,
+        &__metric,
+        &__tickets {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(5, 5, 5, 0.08);
+            color: inherit;
+        }
+
+        &__skeleton {
+            background: rgba(5, 5, 5, 0.08);
+        }
+    }
+}

@@ -3,19 +3,6 @@ export interface Winner {
     nome: string;
     premio: string;
     sorteioId: string;
-<<<<<<< HEAD
-    data: string; // ISO
-    cidade?: string;
-    uf?: string;
-    foto?: string;
-}
-
-export const winners: Winner[] = [
-    { id: "w1", nome: "Ana P.", premio: "iPhone 15", sorteioId: "00000000-0000-0000-0000-000000000001", data: "2025-09-04T17:00:00Z", cidade: "Brasília", uf: "DF" },
-    { id: "w2", nome: "Carlos M.", premio: "PS5 Slim", sorteioId: "00000000-0000-0000-0000-000000000002", data: "2025-09-01T17:00:00Z", cidade: "Goiânia", uf: "GO" },
-    { id: "w3", nome: "Juliana S.", premio: "Pix R$ 2.000", sorteioId: "00000000-0000-0000-0000-000000000003", data: "2025-08-25T17:00:00Z", cidade: "Anápolis", uf: "GO" },
-];
-=======
     data: string;     
     cidade?: string;
     uf?: string;
@@ -27,4 +14,3 @@ export const winners: Winner[] = [
     { id: "w2", nome: "Carlos M.", premio: "PS5 Slim", sorteioId: "r2", data: "2025-09-01T17:00:00Z", cidade: "Goiânia", uf: "GO" },
     { id: "w3", nome: "Juliana S.", premio: "Pix R$ 2.000", sorteioId: "rX", data: "2025-08-25T17:00:00Z", cidade: "Anápolis", uf: "GO" },
     ];
->>>>>>> main

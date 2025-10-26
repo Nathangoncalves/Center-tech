@@ -11,7 +11,13 @@ export default function useNgTheme() {
     };
 
     const [mode, setMode] = useState<ThemeMode>(getInitialMode);
-    useEffect(() => { localStorage.setItem("ng-mode", mode); }, [mode]);
+
+    useEffect(() => {
+        localStorage.setItem("ng-mode", mode);
+        if (typeof document !== "undefined") {
+            document.body.dataset.theme = mode;
+        }
+    }, [mode]);
 
     const theme = useMemo(() => buildTheme(mode), [mode]);
     return { theme, mode, setMode };

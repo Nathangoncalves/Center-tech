@@ -1,0 +1,31 @@
+.home__raffles {
+    padding-top: clamp(4rem, 8vw, 6rem);
+    padding-bottom: clamp(6rem, 12vw, 8rem);
+    scroll-margin-top: 96px;
+    min-height: calc(100vh - 88px);
+
+    .MuiContainer-root {
+        width: 100%;
+    }
+
+    .home__skeleton-card {
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .home__empty-card {
+        padding: clamp(2.5rem, 5vw, 3.5rem);
+        border-radius: 24px;
+        max-width: 520px;
+        margin: 0 auto;
+        background: rgba(15, 17, 21, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(18px);
+    }
+}
+
+#ganhadores,
+#regulamento,
+#contato {
+    scroll-margin-top: 96px;
+}
