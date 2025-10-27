@@ -5,14 +5,25 @@
         linear-gradient(180deg, #050505 0%, #0f0f0f 100%);
     color: #f4f4f5;
 
-    &__hero {
-        padding: clamp(2rem, 5vw, 3rem);
-        border-radius: 32px;
+    &__nav,
+    &__hero,
+    &__panel,
+    &__tickets {
+        border-radius: 28px;
         background: rgba(0, 0, 0, 0.55);
         border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: clamp(1.5rem, 4vw, 2.5rem);
+        backdrop-filter: blur(8px);
+    }
+
+    &__hero {
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
+    }
+
+    &__panel {
+        margin-bottom: 2rem;
     }
 
     &__metrics {
@@ -22,22 +33,26 @@
     }
 
     &__metric {
-        padding: 1.2rem;
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 1rem;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
         background: rgba(255, 255, 255, 0.02);
     }
 
     &__skeleton {
-        border-radius: 24px;
+        border-radius: 28px;
         background: rgba(255, 255, 255, 0.08);
-        height: 320px;
+        height: 260px;
     }
 
-    &__tickets {
-        border-radius: 20px;
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+    .MuiTabs-indicator {
+        background: linear-gradient(90deg, #f97316, #facc15);
+        height: 4px;
+        border-radius: 999px;
+    }
+
+    .MuiTab-root {
+        font-weight: 700;
     }
 
     @media (prefers-color-scheme: light) {
@@ -46,10 +61,12 @@
             linear-gradient(180deg, #fefefe 0%, #e8e8ed 100%);
         color: #050505;
 
+        &__nav,
         &__hero,
+        &__panel,
         &__metric,
         &__tickets {
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.9);
             border-color: rgba(5, 5, 5, 0.08);
             color: inherit;
         }

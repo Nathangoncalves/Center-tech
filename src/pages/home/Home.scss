@@ -7,55 +7,46 @@
     }
 
     &__metrics {
-        padding: clamp(2rem, 6vw, 4rem) 0;
-        background: rgba(255, 255, 255, 0.02);
+        padding: clamp(2rem, 6vw, 3rem) 0;
     }
 
     &__metric-card {
         border-radius: 24px;
-        padding: 1.5rem;
-        background: rgba(0, 0, 0, 0.55);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        color: #f4f4f5;
+        padding: 1.25rem;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         text-align: center;
-    }
-
-    &__features .landing__feature-card,
-    &__steps .landing__step-card,
-    &__testimonials .landing__testimonial-card,
-    &__cta-card {
-        border-radius: 28px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(255, 255, 255, 0.02);
-        color: inherit;
-    }
-
-    &__feature-card {
-        padding: 1.5rem;
-        min-height: 180px;
-    }
-
-    &__step-card {
-        padding: 1.75rem;
-        text-align: center;
-    }
-
-    &__testimonial-card {
-        padding: 1.75rem;
-        min-height: 220px;
-    }
-
-    &__cta-card {
-        padding: clamp(2rem, 6vw, 3.5rem);
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
     }
 
     &__skeleton {
         border-radius: 24px;
         height: 320px;
         background: rgba(255, 255, 255, 0.08);
+    }
+
+    &__empty {
+        border-radius: 28px;
+        padding: clamp(2rem, 4vw, 3rem);
+        border: 1px dashed rgba(255, 255, 255, 0.15);
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    &__cta {
+        padding-bottom: clamp(4rem, 8vw, 6rem);
+    }
+
+    &__cta-card {
+        border-radius: 32px;
+        padding: clamp(2rem, 5vw, 3.5rem);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
 }
 
@@ -64,14 +55,8 @@ body[data-theme="light"] {
         background: linear-gradient(180deg, #fdfdfd 0%, #f1f2f5 100%);
         color: #050505;
 
-        &__metrics {
-            background: rgba(5, 5, 5, 0.02);
-        }
-
         &__metric-card,
-        &__feature-card,
-        &__step-card,
-        &__testimonial-card,
+        &__empty,
         &__cta-card {
             background: rgba(255, 255, 255, 0.92);
             border-color: rgba(5, 5, 5, 0.08);

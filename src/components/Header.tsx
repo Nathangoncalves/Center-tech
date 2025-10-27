@@ -1,4 +1,4 @@
-import { useState, MouseEvent, useMemo, useEffect } from "react";
+import { MouseEvent, useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
     AppBar,
@@ -10,63 +10,73 @@ import {
     Menu,
     MenuItem,
     Tooltip,
+    Divider,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import MenuIcon from "@mui/icons-material/Menu";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import type { ThemeMode } from "../types";
 import logoDark from "../assets/img/png/logo-dark.png";
 import logoLight from "../assets/img/png/logo-white.png";
 import { getAuthToken, setAuthToken } from "../services/api";
+import { clearStoredRole, getStoredRole } from "@/utils/authStorage";
 
 type Props = { mode: ThemeMode; setMode: (m: ThemeMode) => void };
 
 export default function Header({ mode, setMode }: Props) {
-const [anchor, setAnchor] = useState<null | HTMLElement>(null);
-const open = Boolean(anchor);
-const onOpen = (event: MouseEvent<HTMLElement>) => setAnchor(event.currentTarget);
-const onClose = () => setAnchor(null);
     const navigate = useNavigate();
-
-    const logoSrc = useMemo(() => (mode === "dark" ? logoLight : logoDark), [mode]);
-    const buttonBg = useMemo(() => (mode === "dark" ? "white" : "black"), [mode]);
-    const buttonColor = useMemo(() => (mode === "dark" ? "black" : "white"), [mode]);
-
+    const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => Boolean(getAuthToken()));
+    const [currentRole, setCurrentRole] = useState(getStoredRole());
 
     useEffect(() => {
-        const updateAuthState = () => {
+        const syncAuth = () => {
             setIsAuthenticated(Boolean(getAuthToken()));
+            setCurrentRole(getStoredRole());
         };
-        updateAuthState();
-        window.addEventListener("auth:changed", updateAuthState);
-        window.addEventListener("storage", updateAuthState);
+        window.addEventListener("auth:changed", syncAuth);
+        window.addEventListener("storage", syncAuth);
+        syncAuth();
         return () => {
-            window.removeEventListener("auth:changed", updateAuthState);
-            window.removeEventListener("storage", updateAuthState);
+            window.removeEventListener("auth:changed", syncAuth);
+            window.removeEventListener("storage", syncAuth);
         };
     }, []);
 
-    useEffect(() => {
-        if (isAuthenticated && anchor) {
-            setAnchor(null);
-        }
-    }, [isAuthenticated, anchor]);
-
-    const handleLogout = () => {
-        setAuthToken(null);
-        navigate("/", { replace: true });
-    };
-
-    const publicLinks = useMemo(
+    const logoSrc = useMemo(() => (mode === "dark" ? logoLight : logoDark), [mode]);
+    const navLinks = useMemo(
         () => [
             { label: "Sorteios", href: "/#sorteios" },
+            { label: "Como funciona", href: "/#como-funciona" },
             { label: "Ganhadores", href: "/#ganhadores" },
             { label: "Regulamento", href: "/#regulamento" },
-            { label: "Contato", href: "/#contato" },
         ],
         [],
     );
+
+    const isAdmin = currentRole === "ADMIN";
+
+    const handleOpenMenu = (event: MouseEvent<HTMLButtonElement>) => setMenuAnchor(event.currentTarget);
+    const handleCloseMenu = () => setMenuAnchor(null);
+
+    const handleLogout = () => {
+        setAuthToken(null);
+        clearStoredRole();
+        navigate("/", { replace: true });
+    };
+
+    const goToDashboard = () => navigate(isAdmin ? "/gestor" : "/participante");
+
+    const actionButtons = isAuthenticated
+        ? [
+            { key: "area", label: isAdmin ? "Painel do gestor" : "Área do usuário", variant: "outlined" as const, onClick: goToDashboard },
+            { key: "logout", label: "Sair", variant: "contained" as const, onClick: handleLogout },
+        ]
+        : [
+            { key: "login", label: "Entrar", variant: "text" as const, onClick: () => navigate("/login") },
+            { key: "signup", label: "Criar conta", variant: "contained" as const, onClick: () => navigate("/cadastro") },
+        ];
 
     return (
         <AppBar
@@ -82,7 +92,7 @@ const onClose = () => setAnchor(null);
                 WebkitBackdropFilter: "saturate(180%) blur(12px)",
             }}
         >
-            <Toolbar sx={{ minHeight: 72 }}>
+            <Toolbar sx={{ minHeight: 72, gap: 2, flexWrap: "wrap" }}>
                 <Box
                     component={RouterLink}
                     to="/"
@@ -93,88 +103,73 @@ const onClose = () => setAnchor(null);
                         color: "inherit",
                     }}
                 >
-                    <Box
-                        component="img"
-                        src={logoSrc}
-                        alt="Centertech Sorteios"
-                        sx={{ height: 40, width: "auto" }}
-                    />
+                    <Box component="img" src={logoSrc} alt="Centertech Sorteios" sx={{ height: 40, width: "auto" }} />
                 </Box>
+
+                <Stack direction="row" spacing={1} sx={{ display: { xs: "none", md: "flex" } }}>
+                    {navLinks.map(({ label, href }) => (
+                        <Button key={href} component="a" href={href} variant="text" sx={{ fontWeight: 600 }}>
+                            {label}
+                        </Button>
+                    ))}
+                </Stack>
 
                 <Box sx={{ flexGrow: 1 }} />
 
-                <Stack direction="row" spacing={1} alignItems="center">
-                    {!isAuthenticated &&
-                        publicLinks.map(({ label, href }) => (
-                            <Button key={href} component={RouterLink} to={href} variant="text">
-                                {label}
-                            </Button>
-                        ))}
-
-                    <Tooltip title="Tema">
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}>
+                    <Tooltip title="Alternar tema">
                         <IconButton onClick={() => setMode(mode === "dark" ? "light" : "dark")}>
                             {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
                         </IconButton>
                     </Tooltip>
 
-                    {isAuthenticated ? (
-                        <Button
-                            onClick={handleLogout}
-                            sx={{
-                                backgroundColor: buttonBg,
-                                color: buttonColor,
-                                padding: "6px 32px",
-                                "&:hover": {
-                                    backgroundColor: mode === "dark" ? "grey.200" : "grey.900",
-                                },
+                    {actionButtons.map(({ key, label, variant, onClick }) => (
+                        <Button key={key} variant={variant} size="medium" onClick={onClick} sx={{ fontWeight: 600 }}>
+                            {label}
+                        </Button>
+                    ))}
+
+                    <IconButton
+                        edge="end"
+                        color="inherit"
+                        onClick={handleOpenMenu}
+                        sx={{ display: { xs: "inline-flex", md: "none" } }}
+                        aria-label="Abrir menu"
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                </Stack>
+
+                <Menu
+                    anchorEl={menuAnchor}
+                    open={Boolean(menuAnchor)}
+                    onClose={handleCloseMenu}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    transformOrigin={{ vertical: "top", horizontal: "right" }}
+                >
+                    {navLinks.map(({ label, href }) => (
+                        <MenuItem
+                            key={href}
+                            component="a"
+                            href={href}
+                            onClick={handleCloseMenu}
+                        >
+                            {label}
+                        </MenuItem>
+                    ))}
+                    <Divider sx={{ my: 0.5 }} />
+                    {actionButtons.map(({ key, label, onClick }) => (
+                        <MenuItem
+                            key={`mobile-${key}`}
+                            onClick={() => {
+                                handleCloseMenu();
+                                onClick();
                             }}
                         >
-                            Sair
-                        </Button>
-                    ) : (
-                        <>
-                            <Tooltip title="Login / Cadastro">
-                                <Button
-                                    onClick={onOpen}
-                                    sx={{
-                                        backgroundColor: buttonBg,
-                                        color: buttonColor,
-                                        padding: "6px 75px",
-                                        "&:hover": {
-                                            backgroundColor: mode === "dark" ? "grey.200" : "grey.900",
-                                        },
-                                    }}
-                                >
-                                    Login
-                                </Button>
-                            </Tooltip>
-                            <Menu
-                                anchorEl={anchor}
-                                open={!isAuthenticated && open}
-                                onClose={onClose}
-                                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                                transformOrigin={{ vertical: "top", horizontal: "right" }}
-                            >
-                                <MenuItem
-                                    onClick={() => {
-                                        onClose();
-                                        navigate("/login");
-                                    }}
-                                >
-                                    Fazer Login
-                                </MenuItem>
-                                <MenuItem
-                                    onClick={() => {
-                                        onClose();
-                                        navigate("/cadastro");
-                                    }}
-                                >
-                                    Criar Conta
-                                </MenuItem>
-                            </Menu>
-                        </>
-                    )}
-                </Stack>
+                            {label}
+                        </MenuItem>
+                    ))}
+                </Menu>
             </Toolbar>
         </AppBar>
     );

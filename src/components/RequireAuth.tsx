@@ -1,23 +1,17 @@
 import { Navigate, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
-import { getAuthToken } from "../services/api";
-import { getStoredRole } from "@/utils/authStorage";
+import { getAuthToken } from "@/services/api";
 
-interface RequireAdminProps {
+interface RequireAuthProps {
     children: ReactNode;
 }
 
-export default function RequireAdmin({ children }: RequireAdminProps) {
+export default function RequireAuth({ children }: RequireAuthProps) {
     const token = getAuthToken();
     const location = useLocation();
-    const role = getStoredRole();
 
     if (!token) {
         return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-    }
-
-    if (role !== "ADMIN") {
-        return <Navigate to="/participante" replace />;
     }
 
     return <>{children}</>;

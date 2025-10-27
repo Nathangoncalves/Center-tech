@@ -1,4 +1,5 @@
 import axios from "axios";
+import { clearStoredRole } from "@/utils/authStorage";
 
 const rawBaseUrl = ("http://localhost:8081");
 const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, "");
@@ -54,6 +55,7 @@ export function setAuthToken(token: string | null, persist = true) {
                 localStorage.setItem(TOKEN_STORAGE_KEY, token);
             } else {
                 localStorage.removeItem(TOKEN_STORAGE_KEY);
+                clearStoredRole();
             }
         } catch {
             // Ignore storage errors (e.g., private mode)

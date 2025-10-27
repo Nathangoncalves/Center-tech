@@ -1,11 +1,26 @@
 import { FormEvent, useState } from "react";
-import { Box, Button, Container, Paper, Stack, TextField, Typography, Alert } from "@mui/material";
+import {
+    Box,
+    Button,
+    Container,
+    Paper,
+    Stack,
+    TextField,
+    Typography,
+    Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+} from "@mui/material";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import type { AxiosResponse } from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import useNgTheme from "../../hooks/useNgTheme";
 import Header from "../../components/Header";
 import api, { setAuthToken } from "../../services/api";
+import { UserRole } from "@/types";
+import { setStoredRole } from "@/utils/authStorage";
 
 interface LoginResponse {
     token?: string;
@@ -40,7 +55,17 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const { state } = useLocation() as { state?: { from?: string } };
-    const redirectTo = state?.from ?? "/gestor";
+    const [forgotOpen, setForgotOpen] = useState(false);
+    const [recoverEmail, setRecoverEmail] = useState("");
+    const [recoverFeedback, setRecoverFeedback] = useState<string>();
+    const [recoverLoading, setRecoverLoading] = useState(false);
+
+    interface MeProfile {
+        uuid: string;
+        nome: string;
+        email: string;
+        role: UserRole;
+    }
 
     const handle = async (e: FormEvent) => {
         e.preventDefault();
@@ -56,8 +81,37 @@ export default function Login() {
                 password: pass,
             });
             const token = extractToken(response);
+            if (!token) {
+                setErr("Não recebemos o token de acesso. Tente novamente.");
+                setLoading(false);
+                return;
+            }
             setAuthToken(token);
-            navigate(redirectTo, { replace: true });
+            let role: UserRole | undefined;
+            try {
+                const { data } = await api.get<MeProfile>("/me");
+                role = data?.role;
+            } catch (meError) {
+                console.warn("Endpoint /me não disponível, utilizando /user/me", meError);
+                try {
+                    const { data } = await api.get<{ role?: UserRole }>("/user/me");
+                    role = data?.role;
+                } catch (fallbackError) {
+                    console.error("Falha ao consultar perfil", fallbackError);
+                }
+            }
+            setStoredRole(role ?? null);
+            const destination = (() => {
+                const from = state?.from;
+                if (from) {
+                    if (from.startsWith("/gestor") && role !== UserRole.ADMIN) {
+                        return "/participante";
+                    }
+                    return from;
+                }
+                return role === UserRole.ADMIN ? "/gestor" : "/participante";
+            })();
+            navigate(destination, { replace: true });
         } catch (error) {
             console.error("Falha no login", error);
             setErr("Credenciais inválidas ou servidor indisponível.");
@@ -65,6 +119,25 @@ export default function Login() {
             setLoading(false);
         }
     };
+
+    const handleForgotPassword = async () => {
+        if (!recoverEmail.trim()) {
+            setRecoverFeedback("Informe o e-mail cadastrado.");
+            return;
+        }
+        setRecoverLoading(true);
+        setRecoverFeedback(undefined);
+        try {
+            await api.post("/main/esqueci-senha", { email: recoverEmail.trim().toLowerCase() });
+            setRecoverFeedback("Enviamos um link de redefinição para o seu e-mail.");
+        } catch (error) {
+            console.error("Erro ao solicitar redefinição", error);
+            setRecoverFeedback("Não foi possível enviar o link agora. Tente novamente.");
+        } finally {
+            setRecoverLoading(false);
+        }
+    };
+
     return (
     <ThemeProvider theme={theme}>
         <CssBaseline />
@@ -93,14 +166,41 @@ export default function Login() {
                     autoFocus
                 />
                 {err && <Alert severity="error">{err}</Alert>}
-                <Button type="submit" variant="contained" size="large" disabled={loading}>
-                    {loading ? "Entrando..." : "Entrar"}
-                </Button>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems="center">
+                    <Button type="submit" variant="contained" size="large" disabled={loading}>
+                        {loading ? "Entrando..." : "Entrar"}
+                    </Button>
+                    <Button variant="text" onClick={() => setForgotOpen(true)}>
+                        Esqueci minha senha
+                    </Button>
+                </Stack>
                 </Stack>
             </Box>
             </Paper>
         </Container>
         </Box>
+
+        <Dialog open={forgotOpen} onClose={() => setForgotOpen(false)} fullWidth maxWidth="xs">
+            <DialogTitle>Recuperar senha</DialogTitle>
+            <DialogContent>
+                <Stack spacing={2} sx={{ mt: 1 }}>
+                    <TextField
+                        label="E-mail cadastrado"
+                        type="email"
+                        value={recoverEmail}
+                        onChange={(event) => setRecoverEmail(event.target.value)}
+                        fullWidth
+                    />
+                    {recoverFeedback && <Alert severity="info">{recoverFeedback}</Alert>}
+                </Stack>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={() => setForgotOpen(false)}>Cancelar</Button>
+                <Button onClick={handleForgotPassword} disabled={recoverLoading}>
+                    {recoverLoading ? "Enviando..." : "Enviar link"}
+                </Button>
+            </DialogActions>
+        </Dialog>
     </ThemeProvider>
     );
 }

@@ -23,6 +23,7 @@ import AdminTicketsSection from "./sections/AdminTicketsSection";
 import AdminTransactionsSection from "./sections/AdminTransactionsSection";
 import AdminItemsSection from "./sections/AdminItemsSection";
 import AdminMediaSection from "./sections/AdminMediaSection";
+import AdminSettingsSection from "./sections/AdminSettingsSection";
 import { useNavigate } from "react-router-dom";
 import { clearAuthToken } from "../../services/api";
 
@@ -73,6 +74,8 @@ export default function Admin() {
             return <AdminItemsSection />;
         case "media":
             return <AdminMediaSection />;
+        case "settings":
+            return <AdminSettingsSection />;
         default:
             return (
                 <Paper sx={{ p: 5, borderRadius: 3, textAlign: "center" }}>
