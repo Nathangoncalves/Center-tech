@@ -1,71 +1,111 @@
 .landing {
-    background: linear-gradient(180deg, #050505 0%, #0f0f0f 100%);
-    color: #f4f4f5;
+    min-height: 100vh;
+    background: radial-gradient(120% 120% at 80% 20%, rgba(0, 200, 200, 0.25) 0%, rgba(200, 160, 255, 0.25) 25%, rgba(248, 249, 252, 1) 65%);
+    color: #0f172a;
+    position: relative;
+    overflow: hidden;
 
-    &__section {
-        padding: clamp(4rem, 8vw, 6rem) 0;
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.1);
+        pointer-events: none;
     }
 
     &__metrics {
-        padding: clamp(2rem, 6vw, 3rem) 0;
+        padding: clamp(2.5rem, 6vw, 3.5rem) 0;
     }
 
     &__metric-card {
+        border-radius: 20px;
+        padding: 1.75rem;
+        text-align: left;
+        display: grid;
+        gap: 0.5rem;
+        backdrop-filter: blur(16px);
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        box-shadow: 0 24px 45px rgba(15, 23, 42, 0.15);
+    }
+
+    &__section {
+        padding: clamp(3.5rem, 8vw, 5.5rem) 0;
+    }
+
+    &__section-headline {
+        display: grid;
+        gap: 0.6rem;
+        backdrop-filter: blur(18px);
         border-radius: 24px;
-        padding: 1.25rem;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        text-align: center;
+        padding: clamp(2rem, 5vw, 3rem);
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        box-shadow: 0 32px 60px rgba(15, 23, 42, 0.16);
+    }
+
+    &__section-title {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+
+    &__skeleton-grid {
+        display: grid;
+        gap: 1.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
 
     &__skeleton {
+        height: 360px;
         border-radius: 24px;
-        height: 320px;
-        background: rgba(255, 255, 255, 0.08);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.25));
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(14px);
     }
 
     &__empty {
-        border-radius: 28px;
-        padding: clamp(2rem, 4vw, 3rem);
-        border: 1px dashed rgba(255, 255, 255, 0.15);
         text-align: center;
-        display: flex;
-        flex-direction: column;
+        display: grid;
         gap: 1rem;
-        align-items: center;
+        padding: clamp(2rem, 5vw, 3rem);
+        border-radius: 28px;
+        backdrop-filter: blur(22px);
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.38);
+        box-shadow: 0 28px 52px rgba(15, 23, 42, 0.18);
     }
 
     &__cta {
-        padding-bottom: clamp(4rem, 8vw, 6rem);
+        padding-bottom: clamp(3rem, 8vw, 5rem);
     }
 
     &__cta-card {
-        border-radius: 32px;
+        border-radius: 28px;
         padding: clamp(2rem, 5vw, 3.5rem);
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
-        background: rgba(0, 0, 0, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(22px);
+        background: rgba(255, 255, 255, 0.58);
+        border: 1px solid rgba(255, 255, 255, 0.42);
+        box-shadow: 0 28px 54px rgba(15, 23, 42, 0.18);
     }
 }
 
-body[data-theme="light"] {
-    .landing {
-        background: linear-gradient(180deg, #fdfdfd 0%, #f1f2f5 100%);
-        color: #050505;
+body[data-theme="dark"] .landing {
+    color: #f8fafc;
+    background: radial-gradient(120% 120% at 80% 20%, rgba(200, 160, 255, 0.32) 0%, rgba(0, 200, 200, 0.18) 25%, rgba(10, 10, 12, 0.95) 60%);
 
-        &__metric-card,
-        &__empty,
-        &__cta-card {
-            background: rgba(255, 255, 255, 0.92);
-            border-color: rgba(5, 5, 5, 0.08);
-            color: inherit;
-            box-shadow: 0 18px 35px rgba(15, 23, 42, 0.08);
-        }
+    &__metric-card,
+    &__section-headline,
+    &__empty,
+    &__cta-card {
+        background: rgba(12, 18, 28, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
 
-        &__skeleton {
-            background: rgba(5, 5, 5, 0.08);
-        }
+    &__skeleton {
+        background: linear-gradient(135deg, rgba(40, 50, 70, 0.45), rgba(20, 28, 40, 0.55));
+        border-color: rgba(255, 255, 255, 0.12);
     }
 }

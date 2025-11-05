@@ -1,17 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
     Alert,
     Box,
-    Button,
     Checkbox,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControlLabel,
-    Grid,
-    IconButton,
-    MenuItem,
     Paper,
     Skeleton,
     Stack,
@@ -21,40 +12,15 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    TextField,
     Typography,
     useMediaQuery,
     useTheme,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import type { Ticket } from "../../../types";
 import { useAdminData } from "../AdminDataProvider";
 import { formatDateTime } from "../../../utils/formatters";
-import api from "../../../services/api";
-
-interface TicketFormState {
-    numero: number;
-    userUuid: string;
-    sorteioUuid: string;
-    dataCompra: string;
-    pago: boolean;
-}
-
-const INITIAL_STATE: TicketFormState = {
-    numero: 0,
-    userUuid: "",
-    sorteioUuid: "",
-    dataCompra: new Date().toISOString().slice(0, 16),
-    pago: true,
-};
 
 export default function AdminTicketsSection() {
-    const { tickets, setTickets, users, sorteios, loading, error } = useAdminData();
-    const [open, setOpen] = useState(false);
-    const [form, setForm] = useState<TicketFormState>(INITIAL_STATE);
-    const [submitting, setSubmitting] = useState(false);
-    const [actionError, setActionError] = useState<string>();
+    const { tickets, loading, error } = useAdminData();
     const theme = useTheme();
     const isCompactLayout = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -65,60 +31,6 @@ export default function AdminTicketsSection() {
             ),
         [tickets],
     );
-
-    const handleCreate = async () => {
-        setSubmitting(true);
-        setActionError(undefined);
-        try {
-            const userUuid = form.userUuid?.trim();
-            const sorteioUuid = form.sorteioUuid?.trim();
-            if (!userUuid || !sorteioUuid) {
-                setActionError("Selecione um cliente e um sorteio para emitir o bilhete.");
-                setSubmitting(false);
-                return;
-            }
-            const payload = {
-                numero: Number(form.numero),
-                dataCompra: new Date(form.dataCompra).toISOString(),
-                pago: form.pago,
-                user: userUuid,
-                sorteio: sorteioUuid,
-            };
-            const { data: created } = await api.post<Ticket>("/bilhete/criar", payload);
-            setTickets([created, ...tickets]);
-            setOpen(false);
-            setForm(INITIAL_STATE);
-        } catch (err) {
-            console.error("Erro ao criar bilhete", err);
-            setActionError("Não foi possível registrar o bilhete. Tente novamente.");
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleDelete = async (uuid: string) => {
-        if (!confirm("Remover bilhete?")) return;
-        try {
-            await api.post(`/bilhete/delete/${uuid}`);
-            setTickets(tickets.filter((ticket) => ticket.uuid !== uuid));
-        } catch (err) {
-            console.error("Erro ao remover bilhete", err);
-            setActionError("Não foi possível remover o bilhete.");
-        }
-    };
-
-    const handleTogglePago = async (ticket: Ticket, pago: boolean) => {
-        try {
-            const { data: updated } = await api.post<Ticket>("/bilhete/update", {
-                uuid: ticket.uuid,
-                pago,
-            });
-            setTickets(tickets.map((t) => (t.uuid === ticket.uuid ? updated : t)));
-        } catch (err) {
-            console.error("Erro ao atualizar bilhete", err);
-            setActionError("Não foi possível atualizar o status do bilhete.");
-        }
-    };
 
     return (
         <Stack spacing={3}>
@@ -139,9 +51,6 @@ export default function AdminTicketsSection() {
                             Controle os números vendidos e confirme pagamentos recebidos.
                         </Typography>
                     </Stack>
-                    <Button startIcon={<AddIcon />} variant="contained" onClick={() => setOpen(true)}>
-                        Emitir bilhete
-                    </Button>
                 </Stack>
             </Paper>
 
@@ -161,11 +70,11 @@ export default function AdminTicketsSection() {
                         ) : (
                             <Stack spacing={2}>
                                 {sortedTickets.map((ticket) => {
-                                    const nomeCliente = ticket.nomeCliente?.trim() || ticket.user?.nome || "—";
+                                    const nomeCliente = ticket.nome?.trim() || ticket.user?.nome || "—";
                                     const nomeSorteio = ticket.nomeSorteio?.trim() || ticket.sorteio?.titulo || "—";
                                     return (
                                         <Box
-                                            key={ticket.uuid ?? `${ticket.numero}-${nomeCliente}`}
+                                            key={ticket.user?.uuid ?? `${ticket.numero}-${nomeCliente}`}
                                             sx={{
                                                 border: 1,
                                                 borderColor: "divider",
@@ -179,13 +88,6 @@ export default function AdminTicketsSection() {
                                         >
                                             <Stack direction="row" justifyContent="space-between" alignItems="center">
                                                 <Typography fontWeight={700}>#{ticket.numero}</Typography>
-                                                <IconButton
-                                                    color="error"
-                                                    size="small"
-                                                    onClick={() => ticket.uuid && handleDelete(ticket.uuid)}
-                                                >
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
                                             </Stack>
                                             <Stack spacing={0.5}>
                                                 <Typography variant="body2" color="text.secondary">
@@ -205,16 +107,6 @@ export default function AdminTicketsSection() {
                                                 </Typography>
                                                 <Typography variant="body2">{formatDateTime(ticket.dataCompra)}</Typography>
                                             </Stack>
-                                            <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        checked={ticket.pago}
-                                                        onChange={(e) => handleTogglePago(ticket, e.target.checked)}
-                                                    />
-                                                }
-                                                label="Pagamento confirmado"
-                                                sx={{ ml: -1 }}
-                                            />
                                         </Box>
                                     );
                                 })}
@@ -248,22 +140,15 @@ export default function AdminTicketsSection() {
                                         const nomeCliente = ticket.nome?.trim() || ticket.user?.nome || "—";
                                         const nomeSorteio = ticket.nomeSorteio?.trim() || ticket.sorteio?.titulo || "—";
                                         return (
-                                            <TableRow key={ticket.uuid ?? `${ticket.numero}-${nomeCliente}`}>
+                                            <TableRow key={ticket.user?.uuid ?? `${ticket.numero}-${nomeCliente}`}>
                                                 <TableCell>#{ticket.numero}</TableCell>
                                                 <TableCell>{nomeCliente}</TableCell>
                                                 <TableCell>{nomeSorteio}</TableCell>
                                                 <TableCell>{formatDateTime(ticket.dataCompra)}</TableCell>
                                                 <TableCell>
-                                                    <Checkbox
-                                                        checked={ticket.pago}
-                                                        onChange={(e) => handleTogglePago(ticket, e.target.checked)}
-                                                    />
+                                                    <Checkbox checked={ticket.pago} />
                                                 </TableCell>
-                                                <TableCell align="right">
-                                                    <IconButton color="error" onClick={() => ticket.uuid && handleDelete(ticket.uuid)}>
-                                                        <DeleteIcon />
-                                                    </IconButton>
-                                                </TableCell>
+                                                <TableCell align="right">—</TableCell>
                                             </TableRow>
                                         );
                                     })
@@ -273,92 +158,6 @@ export default function AdminTicketsSection() {
                     </TableContainer>
                 )}
             </Paper>
-
-            <Dialog open={open} onClose={() => (submitting ? null : setOpen(false))} maxWidth="sm" fullWidth>
-                <DialogTitle>Emitir novo bilhete</DialogTitle>
-                <DialogContent dividers>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Número do bilhete"
-                                type="number"
-                                value={form.numero}
-                                onChange={(e) => setForm((prev) => ({ ...prev, numero: Number(e.target.value) }))}
-                                fullWidth
-                                required
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Data da compra"
-                                type="datetime-local"
-                                InputLabelProps={{ shrink: true }}
-                                value={form.dataCompra}
-                                onChange={(e) => setForm((prev) => ({ ...prev, dataCompra: e.target.value }))}
-                                fullWidth
-                                required
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Cliente"
-                                select
-                                value={form.userUuid}
-                                onChange={(e) => setForm((prev) => ({ ...prev, userUuid: e.target.value }))}
-                                fullWidth
-                                required
-                            >
-                                {users.map((user) => (
-                                    <MenuItem key={user.uuid} value={user.uuid}>
-                                        {user.nome} • {user.email}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Sorteio"
-                                select
-                                value={form.sorteioUuid}
-                                onChange={(e) => setForm((prev) => ({ ...prev, sorteioUuid: e.target.value }))}
-                                fullWidth
-                                required
-                            >
-                                {sorteios.map((sorteio) => (
-                                    <MenuItem key={sorteio.uuid} value={sorteio.uuid}>
-                                        {sorteio.titulo}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-                        </Grid>
-                        <Grid item xs={12}>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={form.pago}
-                                        onChange={(e) => setForm((prev) => ({ ...prev, pago: e.target.checked }))}
-                                    />
-                                }
-                                label="Pagamento confirmado"
-                            />
-                        </Grid>
-                    </Grid>
-
-                    {actionError && (
-                        <Alert severity="error" sx={{ mt: 2 }} onClose={() => setActionError(undefined)}>
-                            {actionError}
-                        </Alert>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpen(false)} disabled={submitting}>
-                        Cancelar
-                    </Button>
-                    <Button onClick={handleCreate} variant="contained" disabled={submitting}>
-                        {submitting ? "Salvando..." : "Registrar bilhete"}
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </Stack>
     );
 }

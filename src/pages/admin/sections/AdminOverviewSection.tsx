@@ -18,15 +18,16 @@ import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
-import type { Sorteio, Transacao } from "../../../types";
+import LaunchIcon from "@mui/icons-material/Launch";
+import type { GatewayPayment, Sorteio } from "../../../types";
 import { useAdminData } from "../AdminDataProvider";
-import { formatCurrency, formatDateTime, formatNumber } from "../../../utils/formatters";
+import { formatCurrency, formatNumber } from "../../../utils/formatters";
 
 const metricCards = [
-    { key: "faturamento", label: "Faturamento Bruto", icon: <TrendingUpIcon /> },
+    { key: "faturamento", label: "Faturamento bruto", icon: <TrendingUpIcon /> },
     { key: "usuarios", label: "Usuários ativos", icon: <PeopleAltIcon /> },
     { key: "bilhetes", label: "Bilhetes emitidos", icon: <ConfirmationNumberIcon /> },
-    { key: "transacoes", label: "Transações registradas", icon: <ReceiptLongIcon /> },
+    { key: "transacoes", label: "Cobranças registradas", icon: <ReceiptLongIcon /> },
 ];
 
 const computeProgress = (sorteio: Sorteio) => {
@@ -34,37 +35,42 @@ const computeProgress = (sorteio: Sorteio) => {
     return Math.min(100, Math.round((sorteio.qtdVendidos / sorteio.qtdTotalBilhetes) * 100));
 };
 
-const sumEntradas = (transacoes: Transacao[]) =>
-    transacoes.reduce(
-        (acc, transacao) =>
-            transacao.tipo === "ENTRADA" ? acc + transacao.valor : acc,
-        0,
-    );
+const statusMeta: Record<string, { label: string; color: "default" | "success" | "warning" | "error" }> = {
+    PAID: { label: "Pago", color: "success" },
+    PENDING: { label: "Pendente", color: "warning" },
+    CANCELLED: { label: "Cancelado", color: "default" },
+    FAILED: { label: "Falhou", color: "error" },
+};
 
-const sumSaidas = (transacoes: Transacao[]) =>
-    transacoes.reduce(
-        (acc, transacao) =>
-            transacao.tipo === "SAIDA" ? acc + transacao.valor : acc,
-        0,
-    );
+const sortPayments = (payments: GatewayPayment[]) =>
+    [...payments].sort((a, b) => {
+        const amountDiff = b.amount - a.amount;
+        if (amountDiff !== 0) return amountDiff;
+        return a.id.localeCompare(b.id);
+    });
 
-const sortByDate = <T extends { data?: string; createdAt?: string }>(items: T[]) =>
-    [...items].sort((a, b) => {
-        const dateA = new Date(a.data ?? a.createdAt ?? 0).getTime();
-        const dateB = new Date(b.data ?? b.createdAt ?? 0).getTime();
-        return dateB - dateA;
+const sortRaffles = (raffles: Sorteio[]) =>
+    [...raffles].sort((a, b) => {
+        const progressDiff = computeProgress(b) - computeProgress(a);
+        if (progressDiff !== 0) return progressDiff;
+        return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
     });
 
 export default function AdminOverviewSection() {
-    const { loading, error, users, sorteios, tickets, transacoes } = useAdminData();
+    const { loading, error, users, sorteios, tickets, pagamentos } = useAdminData();
 
-    const safeTransacoes = Array.isArray(transacoes) ? transacoes : [];
+    const safePagamentos = Array.isArray(pagamentos) ? pagamentos : [];
     const safeSorteios = Array.isArray(sorteios) ? sorteios : [];
     const safeUsers = Array.isArray(users) ? users : [];
     const safeTickets = Array.isArray(tickets) ? tickets : [];
 
-    const faturamentoTotal = sumEntradas(safeTransacoes) - sumSaidas(safeTransacoes);
-    const abertos = safeSorteios.filter((s) => s.status === "ABERTO").length;
+    const faturamentoTotal =
+        safePagamentos.filter((payment) => payment.status === "PAID").reduce((acc, payment) => acc + payment.amount, 0) /
+        100;
+
+    const topPagamentos = sortPayments(safePagamentos).slice(0, 6);
+    const topSorteios = sortRaffles(safeSorteios).slice(0, 4);
+
     const vendaMedia =
         safeSorteios.length > 0
             ? safeSorteios.reduce((acc, sorteio) => acc + computeProgress(sorteio), 0) / safeSorteios.length
@@ -83,7 +89,7 @@ export default function AdminOverviewSection() {
                             ? formatNumber(safeUsers.length)
                             : key === "bilhetes"
                             ? formatNumber(safeTickets.length)
-                            : formatNumber(safeTransacoes.length);
+                            : formatNumber(safePagamentos.length);
 
                     return (
                         <Grid key={key} size={{ xs: 12, md: 3 }}>
@@ -112,115 +118,49 @@ export default function AdminOverviewSection() {
             <Grid container spacing={3}>
                 <Grid size={{ xs: 12, lg: 7 }}>
                     <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: "12px" }}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                            <Typography variant="h6" fontWeight={800}>
-                                Sorteios em destaque
-                            </Typography>
-                            <Chip icon={<EmojiEventsIcon />} label={`${abertos} abertos`} color="primary" variant="outlined" />
-                        </Stack>
-                        {loading ? (
-                            <Stack spacing={1.5}>
-                                {Array.from({ length: 3 }).map((_, idx) => (
-                                    <Skeleton key={idx} variant="rounded" height={74} />
-                                ))}
-                            </Stack>
-                        ) : (
-                            <List disablePadding>
-                                {sortByDate(safeSorteios)
-                                    .slice(0, 5)
-                                    .map((sorteio) => (
-                                        <ListItem key={sorteio.uuid} disableGutters sx={{ py: 1.5 }}>
-                                            <ListItemAvatar>
-                                                <Avatar variant="rounded">
-                                                    <EmojiEventsIcon />
-                                                </Avatar>
-                                            </ListItemAvatar>
-                                            <ListItemText
-                                                primary={
-                                                    <Stack direction="row" justifyContent="space-between">
-                                                        <Typography fontWeight={700}>{sorteio.titulo}</Typography>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            {formatDateTime(sorteio.dataEncerramento)}
-                                                        </Typography>
-                                                    </Stack>
-                                                }
-                                                secondary={
-                                                    <Stack spacing={1}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            {sorteio.descricao}
-                                                        </Typography>
-                                                        <LinearProgress
-                                                            variant="determinate"
-                                                            value={computeProgress(sorteio)}
-                                                        />
-                                                    </Stack>
-                                                }
-                                            />
-                                        </ListItem>
-                                    ))}
-                                {!safeSorteios.length && (
-                                    <Typography variant="body2" color="text.secondary">
-                                        Nenhum sorteio cadastrado ainda.
-                                    </Typography>
-                                )}
-                            </List>
-                        )}
-                    </Paper>
-                </Grid>
-
-                <Grid size={{ xs: 12, lg: 5 }}>
-                    <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: "12px" }}>
                         <Typography variant="h6" fontWeight={800} sx={{ mb: 2 }}>
-                            Últimas transações
+                            Sorteios em destaque
                         </Typography>
                         {loading ? (
-                            <Stack spacing={1.5}>
-                                {Array.from({ length: 5 }).map((_, idx) => (
+                            <Stack spacing={2}>
+                                {Array.from({ length: 4 }).map((_, idx) => (
                                     <Skeleton key={idx} variant="rounded" height={60} />
                                 ))}
                             </Stack>
-                        ) : (
-                            <List disablePadding>
-                                {sortByDate(safeTransacoes)
-                                    .slice(0, 6)
-                                    .map((transacao) => (
-                                        <ListItem key={transacao.uuid} disableGutters sx={{ py: 1.2 }}>
-                                            <ListItemText
-                                                primary={
-                                                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                                        <Typography fontWeight={700}>
-                                                            {transacao.user?.nome ?? "Usuário"}
-                                                        </Typography>
-                                                        <Typography
-                                                            color={
-                                                                transacao.tipo === "ENTRADA" ? "success.main" : "error.main"
-                                                            }
-                                                            fontWeight={700}
-                                                        >
-                                                            {transacao.tipo === "ENTRADA" ? "+" : "-"}
-                                                            {formatCurrency(transacao.valor)}
-                                                        </Typography>
-                                                    </Stack>
-                                                }
-                                                secondary={
-                                                    <Stack direction="row" justifyContent="space-between">
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            {transacao.metodoPagamento} • {transacao.referencia ?? "—"}
-                                                        </Typography>
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            {formatDateTime(transacao.data)}
-                                                        </Typography>
-                                                    </Stack>
-                                                }
+                        ) : safeSorteios.length ? (
+                            <Stack spacing={2}>
+                                {topSorteios.map((sorteio) => {
+                                    const progress = computeProgress(sorteio);
+                                    return (
+                                        <Stack key={sorteio.uuid} spacing={1}>
+                                            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                                <Typography fontWeight={700}>{sorteio.titulo}</Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {progress}% vendido
+                                                </Typography>
+                                            </Stack>
+                                            <LinearProgress
+                                                variant="determinate"
+                                                value={progress}
+                                                sx={{ height: 8, borderRadius: 999 }}
                                             />
-                                        </ListItem>
-                                    ))}
-                                {!safeTransacoes.length && (
-                                    <Typography variant="body2" color="text.secondary">
-                                        Nenhuma transação registrada ainda.
-                                    </Typography>
-                                )}
-                            </List>
+                                            <Stack direction="row" justifyContent="space-between" color="text.secondary">
+                                                <Typography variant="caption">
+                                                    Vendidos: {formatNumber(sorteio.qtdVendidos)}
+                                                </Typography>
+                                                <Typography variant="caption">
+                                                    Restantes:{" "}
+                                                    {formatNumber(Math.max(sorteio.qtdTotalBilhetes - sorteio.qtdVendidos, 0))}
+                                                </Typography>
+                                            </Stack>
+                                        </Stack>
+                                    );
+                                })}
+                            </Stack>
+                        ) : (
+                            <Typography variant="body2" color="text.secondary">
+                                Nenhum sorteio cadastrado ainda.
+                            </Typography>
                         )}
                     </Paper>
 
@@ -238,6 +178,90 @@ export default function AdminOverviewSection() {
                         <Typography variant="body2" color="text.secondary">
                             Percentual médio de bilhetes vendidos por sorteio.
                         </Typography>
+                    </Paper>
+                </Grid>
+
+                <Grid size={{ xs: 12, lg: 5 }}>
+                    <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: "12px" }}>
+                        <Typography variant="h6" fontWeight={800} sx={{ mb: 2 }}>
+                            Últimas cobranças
+                        </Typography>
+                        {loading ? (
+                            <Stack spacing={1.5}>
+                                {Array.from({ length: 6 }).map((_, idx) => (
+                                    <Skeleton key={idx} variant="rounded" height={60} />
+                                ))}
+                            </Stack>
+                        ) : safePagamentos.length ? (
+                            <List disablePadding>
+                                {topPagamentos.map((payment) => {
+                                    const amount = payment.amount / 100;
+                                    const customerName = payment.customer?.metadata?.name ?? "Cliente";
+                                    const customerEmail = payment.customer?.metadata?.email ?? "";
+                                    const statusInfo = statusMeta[payment.status] ?? {
+                                        label: payment.status ?? "—",
+                                        color: "default",
+                                    };
+
+                                    return (
+                                        <ListItem key={payment.id} disableGutters sx={{ py: 1.4 }}>
+                                            <ListItemAvatar>
+                                                <Avatar sx={{ bgcolor: "primary.main" }}>
+                                                    <EmojiEventsIcon />
+                                                </Avatar>
+                                            </ListItemAvatar>
+                                            <ListItemText
+                                                primary={
+                                                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                                        <Stack spacing={0.2}>
+                                                            <Typography fontWeight={700}>{customerName}</Typography>
+                                                            {customerEmail && (
+                                                                <Typography variant="caption" color="text.secondary">
+                                                                    {customerEmail}
+                                                                </Typography>
+                                                            )}
+                                                        </Stack>
+                                                        <Typography fontWeight={700}>{formatCurrency(amount)}</Typography>
+                                                    </Stack>
+                                                }
+                                                secondary={
+                                                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                                                            {payment.methods?.join(", ") || "—"}
+                                                        </Typography>
+                                                        <Stack direction="row" spacing={1} alignItems="center">
+                                                            <Chip
+                                                                size="small"
+                                                                label={statusInfo.label}
+                                                                color={statusInfo.color}
+                                                                variant={statusInfo.color === "default" ? "outlined" : "filled"}
+                                                            />
+                                                            {payment.url && (
+                                                                <Chip
+                                                                    component="a"
+                                                                    href={payment.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    size="small"
+                                                                    icon={<LaunchIcon fontSize="small" />}
+                                                                    label="Abrir"
+                                                                    clickable
+                                                                    variant="outlined"
+                                                                />
+                                                            )}
+                                                        </Stack>
+                                                    </Stack>
+                                                }
+                                            />
+                                        </ListItem>
+                                    );
+                                })}
+                            </List>
+                        ) : (
+                            <Typography variant="body2" color="text.secondary">
+                                Nenhuma cobrança registrada ainda.
+                            </Typography>
+                        )}
                     </Paper>
                 </Grid>
             </Grid>

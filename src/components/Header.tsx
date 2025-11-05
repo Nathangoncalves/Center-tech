@@ -47,10 +47,11 @@ export default function Header({ mode, setMode }: Props) {
     const logoSrc = useMemo(() => (mode === "dark" ? logoLight : logoDark), [mode]);
     const navLinks = useMemo(
         () => [
-            { label: "Sorteios", href: "/#sorteios" },
-            { label: "Como funciona", href: "/#como-funciona" },
-            { label: "Ganhadores", href: "/#ganhadores" },
-            { label: "Regulamento", href: "/#regulamento" },
+            { label: "Início", to: "/" },
+            { label: "Sorteios", to: "/sorteios" },
+            { label: "Como funciona", to: "/como-funciona" },
+            { label: "Ganhadores", to: "/ganhadores" },
+            { label: "Regulamento", to: "/regulamento" },
         ],
         [],
     );
@@ -85,11 +86,11 @@ export default function Header({ mode, setMode }: Props) {
             sx={{
                 top: 0,
                 zIndex: (t) => t.zIndex.appBar,
-                borderBottom: 1,
+                borderBottom: "1px solid",
                 borderColor: "divider",
-                bgcolor: (theme) => alpha(theme.palette.background.paper, mode === "dark" ? 0.2 : 0.7),
-                backdropFilter: "saturate(180%) blur(12px)",
-                WebkitBackdropFilter: "saturate(180%) blur(12px)",
+                bgcolor: (theme) => alpha(theme.palette.background.paper, mode === "dark" ? 0.3 : 0.85),
+                backdropFilter: "blur(18px)",
+                WebkitBackdropFilter: "blur(18px)",
             }}
         >
             <Toolbar sx={{ minHeight: 72, gap: 2, flexWrap: "wrap" }}>
@@ -106,9 +107,15 @@ export default function Header({ mode, setMode }: Props) {
                     <Box component="img" src={logoSrc} alt="Centertech Sorteios" sx={{ height: 40, width: "auto" }} />
                 </Box>
 
-                <Stack direction="row" spacing={1} sx={{ display: { xs: "none", md: "flex" } }}>
-                    {navLinks.map(({ label, href }) => (
-                        <Button key={href} component="a" href={href} variant="text" sx={{ fontWeight: 600 }}>
+                <Stack direction="row" spacing={0.5} sx={{ display: { xs: "none", md: "flex" } }}>
+                    {navLinks.map(({ label, to }) => (
+                        <Button
+                            key={to}
+                            component={RouterLink}
+                            to={to}
+                            variant="text"
+                            sx={{ fontWeight: 600, textTransform: "none" }}
+                        >
                             {label}
                         </Button>
                     ))}
@@ -124,7 +131,13 @@ export default function Header({ mode, setMode }: Props) {
                     </Tooltip>
 
                     {actionButtons.map(({ key, label, variant, onClick }) => (
-                        <Button key={key} variant={variant} size="medium" onClick={onClick} sx={{ fontWeight: 600 }}>
+                        <Button
+                            key={key}
+                            variant={variant}
+                            size="medium"
+                            onClick={onClick}
+                            sx={{ fontWeight: 600, textTransform: "none", borderRadius: 999, px: 3 }}
+                        >
                             {label}
                         </Button>
                     ))}
@@ -147,11 +160,11 @@ export default function Header({ mode, setMode }: Props) {
                     anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                     transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
-                    {navLinks.map(({ label, href }) => (
+                    {navLinks.map(({ label, to }) => (
                         <MenuItem
-                            key={href}
-                            component="a"
-                            href={href}
+                            key={to}
+                            component={RouterLink}
+                            to={to}
                             onClick={handleCloseMenu}
                         >
                             {label}

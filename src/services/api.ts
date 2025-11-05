@@ -13,9 +13,6 @@ let inMemoryToken: string | null = null;
 
 const api = axios.create({
     baseURL,
-    headers: {
-        "Content-Type": "application/json",
-    },
     withCredentials: true,
 });
 

@@ -29,10 +29,15 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import type { Sorteio, SorteioStatus } from "../../../types";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import { keyframes } from "@mui/system";
+import type { Sorteio, SorteioStatus, Ticket } from "../../../types";
 import { useAdminData } from "../AdminDataProvider";
 import { formatCurrency, formatDate, formatDateTime } from "../../../utils/formatters";
 import api from "../../../services/api";
+import { useToast } from "@/context/ToastContext";
+import { sanitizeMultiline, sanitizeText, toPositiveNumber } from "@/utils/input";
+import SecureImage from "@/components/SecureImage";
 
 interface SorteioFormState {
     titulo: string;
@@ -60,14 +65,32 @@ const STATUS_LABEL: Record<SorteioStatus, string> = {
     FINALIZADO: "Finalizado",
 };
 
+const trophyGlow = keyframes`
+    0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0.35));
+    }
+    50% {
+        transform: scale(1.12);
+        filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.8));
+    }
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0.35));
+    }
+`;
+
 export default function AdminRafflesSection() {
-    const { sorteios, setSorteios, items, loading, error, refreshAll } = useAdminData();
+    const { sorteios, setSorteios, items, tickets, loading, error, refreshAll } = useAdminData();
     const [open, setOpen] = useState(false);
     const [form, setForm] = useState<SorteioFormState>(INITIAL_STATE);
     const [submitting, setSubmitting] = useState(false);
     const [actionError, setActionError] = useState<string>();
+    const [finalizingId, setFinalizingId] = useState<string | null>(null);
+    const [highlightedWinnerId, setHighlightedWinnerId] = useState<string | null>(null);
     const theme = useTheme();
     const isCompactLayout = useMediaQuery(theme.breakpoints.down("md"));
+    const toast = useToast();
 
     const sortedSorteios = useMemo(
         () =>
@@ -79,6 +102,22 @@ export default function AdminRafflesSection() {
         [sorteios],
     );
 
+    const selectedItem = useMemo(
+        () => items.find((item) => item.uuid === form.itemUuid),
+        [items, form.itemUuid],
+    );
+
+    const winnerInfo = useMemo(() => {
+        if (!highlightedWinnerId) return null;
+        const raffle = sorteios.find((s) => s.uuid === highlightedWinnerId);
+        if (!raffle || raffle.status !== "FINALIZADO") return null;
+        const winnerUuid = raffle.vencedor?.uuid;
+        const ticket: Ticket | undefined = tickets.find((bilhete) =>
+            bilhete.sorteio?.uuid === raffle.uuid && (!winnerUuid || bilhete.user?.uuid === winnerUuid),
+        );
+        return { raffle, ticket: ticket ?? null };
+    }, [highlightedWinnerId, sorteios, tickets]);
+
     const handleCreate = async () => {
         setSubmitting(true);
         setActionError(undefined);
@@ -89,21 +128,46 @@ export default function AdminRafflesSection() {
                 dataAgendada: form.dataAgendada || undefined,
                 dataEncerramento: form.dataEncerramento || undefined,
                 status: form.status,
-                item: form.itemUuid ? { uuid: form.itemUuid } : undefined,
+                item: form.itemUuid || null,
                 precoBilhete: Number(form.precoBilhete) || 0,
                 qtdTotalBilhetes: Number(form.qtdTotalBilhetes) || 0,
-                qtdTotalVendidos: 0,
-                vencedor: null,
-                bilhetes: [],
-                midias: []
+                qtdVendidos: 0,
             };
+
+            if (!payload.titulo || !payload.descricao) {
+                const msg = "Informe título e descrição do sorteio.";
+                setActionError(msg);
+                toast.error(msg);
+                setSubmitting(false);
+                return;
+            }
+            if (payload.precoBilhete <= 0 || payload.qtdTotalBilhetes <= 0) {
+                const msg = "Preço e quantidade de bilhetes precisam ser maiores que zero.";
+                setActionError(msg);
+                toast.error(msg);
+                setSubmitting(false);
+                return;
+            }
+            if (payload.dataAgendada && payload.dataEncerramento) {
+                const start = new Date(payload.dataAgendada).getTime();
+                const end = new Date(payload.dataEncerramento).getTime();
+                if (!Number.isNaN(start) && !Number.isNaN(end) && end <= start) {
+                    const msg = "A data de encerramento deve ser posterior à data agendada.";
+                    setActionError(msg);
+                    toast.error(msg);
+                    setSubmitting(false);
+                    return;
+                }
+            }
             const { data: created } = await api.post<Sorteio>("/sorteio/criar", payload);
             setSorteios([...sorteios, created]);
             setOpen(false);
             setForm(INITIAL_STATE);
+            toast.success("Sorteio criado com sucesso.");
         } catch (err) {
             console.error("Erro ao criar sorteio", err);
             setActionError("Não foi possível criar o sorteio. Verifique os dados e tente novamente.");
+            toast.error("Erro ao criar sorteio.");
         } finally {
             setSubmitting(false);
         }
@@ -113,9 +177,11 @@ export default function AdminRafflesSection() {
         try {
             const { data: updated } = await api.post<Sorteio>("/sorteio/update", { uuid, status });
             setSorteios(sorteios.map((s) => (s.uuid === uuid ? updated : s)));
+            toast.info("Status do sorteio atualizado.");
         } catch (err) {
             console.error("Erro ao atualizar sorteio", err);
             setActionError("Falha ao atualizar o status do sorteio.");
+            toast.error("Não foi possível atualizar o status.");
         }
     };
 
@@ -124,16 +190,54 @@ export default function AdminRafflesSection() {
         try {
             await api.post(`/sorteio/delete/${uuid}`);
             setSorteios(sorteios.filter((s) => s.uuid !== uuid));
+            toast.success("Sorteio removido.");
         } catch (err) {
             console.error("Erro ao remover sorteio", err);
             setActionError("Não foi possível remover o sorteio.");
+            toast.error("Erro ao remover sorteio.");
         }
     };
 
-    const handleChange = (field: keyof SorteioFormState, value: string | number) => {
-        setForm((prev) => ({ ...prev, [field]: value }));
+    const handleChange = (field: keyof SorteioFormState, rawValue: string) => {
+        setForm((prev) => {
+            switch (field) {
+            case "titulo":
+                return { ...prev, titulo: sanitizeText(rawValue) };
+            case "descricao":
+                return { ...prev, descricao: sanitizeMultiline(rawValue) };
+            case "precoBilhete":
+                return { ...prev, precoBilhete: Number(toPositiveNumber(rawValue)) };
+            case "qtdTotalBilhetes":
+                return { ...prev, qtdTotalBilhetes: Math.floor(toPositiveNumber(rawValue)) };
+            case "dataAgendada":
+            case "dataEncerramento":
+            case "itemUuid":
+                return { ...prev, [field]: rawValue || undefined };
+            case "status":
+                return { ...prev, status: rawValue as SorteioStatus };
+            default:
+                return prev;
+            }
+        });
     };
 
+    const handleFinalize = async (sorteio: Sorteio) => {
+        if (!confirm("Deseja finalizar este sorteio? Esta ação escolherá um vencedor automaticamente.")) return;
+        setFinalizingId(sorteio.uuid);
+        setActionError(undefined);
+        try {
+            await api.put("/sorteio/finalizar", { uuid: sorteio.uuid, status: true });
+            toast.success(`Sorteio "${sorteio.titulo}" finalizado!`);
+            setHighlightedWinnerId(sorteio.uuid);
+            await refreshAll();
+        } catch (err) {
+            console.error("Erro ao finalizar sorteio", err);
+            setActionError("Não foi possível finalizar o sorteio. Tente novamente.");
+            toast.error("Falha ao finalizar sorteio.");
+        } finally {
+            setFinalizingId(null);
+        }
+    };
     return (
         <Stack spacing={3}>
             {error && <Alert severity="error">{error}</Alert>}
@@ -163,6 +267,46 @@ export default function AdminRafflesSection() {
                     </Stack>
                 </Stack>
             </Paper>
+
+            {winnerInfo && (
+                <Paper
+                    sx={{
+                        p: { xs: 2, md: 3 },
+                        borderRadius: "16px",
+                        bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(255, 215, 0, 0.08)" : "rgba(255, 215, 0, 0.12)",
+                        border: (theme) => `1px solid ${theme.palette.warning.light}`,
+                    }}
+                >
+                    <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ xs: "flex-start", md: "center" }}>
+                        <EmojiEventsIcon
+                            sx={{
+                                fontSize: 48,
+                                color: "warning.main",
+                                animation: `${trophyGlow} 2s ease-in-out infinite`,
+                            }}
+                        />
+                        <Stack spacing={0.5} flex={1}>
+                            <Typography variant="h6" fontWeight={800}>
+                                Sorteio finalizado: {winnerInfo.raffle.titulo}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Ganhador: {winnerInfo.raffle.vencedor?.nome ?? "Participante"}
+                            </Typography>
+                            {winnerInfo.ticket && (
+                                <Typography variant="body2" color="text.secondary">
+                                    Bilhete vencedor nº {winnerInfo.ticket.numero}
+                                </Typography>
+                            )}
+                            <Chip
+                                label="Finalizado"
+                                color="success"
+                                size="small"
+                                sx={{ alignSelf: { xs: "flex-start", md: "center" } }}
+                            />
+                        </Stack>
+                    </Stack>
+                </Paper>
+            )}
 
             <Paper sx={{ borderRadius: "12px", overflow: { xs: "visible", md: "hidden" } }}>
                 {loading ? (
@@ -257,7 +401,19 @@ export default function AdminRafflesSection() {
                                                 <Typography variant="body2">{sorteio.item?.nome ?? "—"}</Typography>
                                             </Stack>
                                         </Stack>
-                                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                        <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap">
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                color="warning"
+                                                startIcon={<EmojiEventsIcon fontSize="small" />}
+                                                onClick={() => handleFinalize(sorteio)}
+                                                disabled={
+                                                    sorteio.status === "FINALIZADO" || finalizingId === sorteio.uuid
+                                                }
+                                            >
+                                                {finalizingId === sorteio.uuid ? "Finalizando..." : "Finalizar"}
+                                            </Button>
                                             <IconButton color="error" size="small" onClick={() => handleDelete(sorteio.uuid)}>
                                                 <DeleteIcon fontSize="small" />
                                             </IconButton>
@@ -330,9 +486,23 @@ export default function AdminRafflesSection() {
                                             <TableCell>{formatDateTime(sorteio.dataEncerramento)}</TableCell>
                                             <TableCell>{sorteio.item?.nome ?? "—"}</TableCell>
                                             <TableCell align="right">
-                                                <IconButton color="error" onClick={() => handleDelete(sorteio.uuid)}>
-                                                    <DeleteIcon />
-                                                </IconButton>
+                                                <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+                                                    <Button
+                                                        size="small"
+                                                        variant="outlined"
+                                                        color="warning"
+                                                        startIcon={<EmojiEventsIcon />}
+                                                        onClick={() => handleFinalize(sorteio)}
+                                                        disabled={
+                                                            sorteio.status === "FINALIZADO" || finalizingId === sorteio.uuid
+                                                        }
+                                                    >
+                                                        {finalizingId === sorteio.uuid ? "Finalizando..." : "Finalizar"}
+                                                    </Button>
+                                                    <IconButton color="error" onClick={() => handleDelete(sorteio.uuid)}>
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </Stack>
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -361,7 +531,7 @@ export default function AdminRafflesSection() {
                                 label="Preço do bilhete"
                                 type="number"
                                 value={form.precoBilhete}
-                                onChange={(e) => handleChange("precoBilhete", Number(e.target.value))}
+                                onChange={(e) => handleChange("precoBilhete", e.target.value)}
                                 fullWidth
                                 required
                                 inputProps={{ step: 0.01 }}
@@ -383,10 +553,29 @@ export default function AdminRafflesSection() {
                                 label="Quantidade total de bilhetes"
                                 type="number"
                                 value={form.qtdTotalBilhetes}
-                                onChange={(e) => handleChange("qtdTotalBilhetes", Number(e.target.value))}
+                                onChange={(e) => handleChange("qtdTotalBilhetes", e.target.value)}
                                 fullWidth
                                 required
                             />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                label="Item associado"
+                                select
+                                value={form.itemUuid ?? ""}
+                                onChange={(e) => handleChange("itemUuid", e.target.value)}
+                                helperText="A imagem do sorteio será a mesma do item selecionado."
+                                fullWidth
+                            >
+                                <MenuItem value="">
+                                    <em>Nenhum item</em>
+                                </MenuItem>
+                                {items.map((item) => (
+                                    <MenuItem key={item.uuid} value={item.uuid}>
+                                        {item.nome} — {formatCurrency(item.valor)}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <TextField
@@ -410,29 +599,10 @@ export default function AdminRafflesSection() {
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <TextField
-                                label="Item associado"
-                                select
-                                value={form.itemUuid ?? ""}
-                                onChange={(e) => handleChange("itemUuid", e.target.value)}
-                                helperText="Selecione o prêmio principal do sorteio."
-                                fullWidth
-                            >
-                                <MenuItem value="">
-                                    <em>Nenhum item</em>
-                                </MenuItem>
-                                {items.map((item) => (
-                                    <MenuItem key={item.uuid} value={item.uuid}>
-                                        {item.nome} — {formatCurrency(item.valor)}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
                                 label="Status inicial"
                                 select
                                 value={form.status}
-                                onChange={(e) => handleChange("status", e.target.value as SorteioStatus)}
+                                onChange={(e) => handleChange("status", e.target.value)}
                                 fullWidth
                             >
                                 {Object.entries(STATUS_LABEL).map(([value, label]) => (
@@ -441,6 +611,31 @@ export default function AdminRafflesSection() {
                                     </MenuItem>
                                 ))}
                             </TextField>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Stack spacing={1}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Imagem do item selecionado
+                                </Typography>
+                                {selectedItem?.imageUrl ? (
+                                    <SecureImage
+                                        source={selectedItem.imageUrl}
+                                        alt={selectedItem.nome}
+                                        sx={{
+                                            width: "100%",
+                                            borderRadius: 2,
+                                            border: 1,
+                                            borderColor: "divider",
+                                            maxHeight: 220,
+                                            objectFit: "cover",
+                                        }}
+                                    />
+                                ) : (
+                                    <Typography variant="caption" color="text.secondary">
+                                        Selecione um item para visualizar a imagem.
+                                    </Typography>
+                                )}
+                            </Stack>
                         </Grid>
                     </Grid>
 

@@ -206,7 +206,6 @@ export default function AdminLayout({
                     display: "flex",
                     flexDirection: "column",
                     minWidth: 0,
-                    ml: { lg: `${drawerWidth}px` },
                     pt: 10,
                     pb: 6,
                     px: { xs: 2, md: 4 },

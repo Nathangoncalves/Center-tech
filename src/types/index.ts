@@ -55,9 +55,9 @@ export interface User extends BaseEntity {
     email: string;
     senhaHash?: string;
     role: UserRole;
-    saldo: number;
     telefone?: string;
     cpf?: string;
+    saldo?: number;
 }
 
 export interface Item extends BaseEntity {
@@ -68,7 +68,9 @@ export interface Item extends BaseEntity {
 }
 
 export interface Midia extends BaseEntity {
-    url: string;
+    url?: string | null;
+    caminho?: string | null;
+    imagem?: string | null;
     tipo: TipoMidia;
     sorteio?: Pick<Sorteio, "uuid" | "titulo">;
 }
@@ -82,6 +84,7 @@ export interface Sorteio extends BaseEntity {
     precoBilhete: number;
     qtdTotalBilhetes: number;
     qtdVendidos: number;
+    imageUrl: string;
     item?: Item | null;
     midias?: Midia[];
     vencedor?: Pick<User, "uuid" | "nome" | "email"> | null;
@@ -123,4 +126,59 @@ export interface SignupPayload {
     telefone: string;
     cpf?: string;
     aceitouTermos: boolean;
+}
+
+export interface PaymentMetadata {
+    name: string;
+    cellphone: string;
+    email: string;
+    taxId: string;
+    zipCode?: string;
+}
+
+export interface PaymentBill {
+    uuid: string;
+    url: string;
+    tipo: string;
+    valor: number;
+    metodoPagamento: string;
+    referencia: string | null;
+    data: string;
+}
+
+export interface GatewayPaymentProduct {
+    id: string;
+    externalId: string;
+    price: number;
+    name: string;
+    quantity: number;
+}
+
+export interface GatewayCustomerMetadata {
+    name?: string;
+    cellphone?: string;
+    email?: string;
+    taxId?: string;
+    zipCode?: string;
+    [key: string]: unknown;
+}
+
+export interface GatewayPaymentCustomer {
+    id: string;
+    metadata: GatewayCustomerMetadata;
+}
+
+export interface GatewayPayment {
+    id: string;
+    url: string;
+    amount: number;
+    status: string;
+    devMode: boolean;
+    methods: string[];
+    products: GatewayPaymentProduct[];
+    frequency: string | null;
+    nextBilling: string | null;
+    customer: GatewayPaymentCustomer | null;
+    allowCoupons: boolean;
+    coupons: string[];
 }

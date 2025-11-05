@@ -6,7 +6,6 @@ import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import InventoryIcon from "@mui/icons-material/Inventory";
-import PermMediaIcon from "@mui/icons-material/PermMedia";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
@@ -22,12 +21,11 @@ import AdminRafflesSection from "./sections/AdminRafflesSection";
 import AdminTicketsSection from "./sections/AdminTicketsSection";
 import AdminTransactionsSection from "./sections/AdminTransactionsSection";
 import AdminItemsSection from "./sections/AdminItemsSection";
-import AdminMediaSection from "./sections/AdminMediaSection";
 import AdminSettingsSection from "./sections/AdminSettingsSection";
 import { useNavigate } from "react-router-dom";
 import { clearAuthToken } from "../../services/api";
 
-type SectionId = "overview" | "users" | "raffles" | "tickets" | "transactions" | "items" | "media" | "settings";
+type SectionId = "overview" | "users" | "raffles" | "tickets" | "transactions" | "items" | "settings";
 
 const SECTION_MAP: Record<SectionId, AdminSection> = {
     overview: { id: "overview", label: "Visão Geral", icon: <DashboardIcon /> },
@@ -36,7 +34,6 @@ const SECTION_MAP: Record<SectionId, AdminSection> = {
     tickets: { id: "tickets", label: "Bilhetes", icon: <ConfirmationNumberIcon /> },
     transactions: { id: "transactions", label: "Transações", icon: <ReceiptLongIcon /> },
     items: { id: "items", label: "Itens", icon: <InventoryIcon /> },
-    media: { id: "media", label: "Mídias", icon: <PermMediaIcon /> },
     settings: { id: "settings", label: "Configurações", icon: <SettingsIcon /> },
 };
 
@@ -47,7 +44,6 @@ const orderedSections: SectionId[] = [
     "tickets",
     "transactions",
     "items",
-    "media",
     "settings",
 ];
 
@@ -72,8 +68,6 @@ export default function Admin() {
             return <AdminTransactionsSection />;
         case "items":
             return <AdminItemsSection />;
-        case "media":
-            return <AdminMediaSection />;
         case "settings":
             return <AdminSettingsSection />;
         default:

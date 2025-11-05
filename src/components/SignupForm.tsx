@@ -1,6 +1,8 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import { Alert, Box, Button, Checkbox, FormControlLabel, Grid, TextField } from "@mui/material";
 import api from "../services/api";
+import { useToast } from "@/context/ToastContext";
+import { sanitizeEmail, sanitizePhone, sanitizeText } from "@/utils/input";
 
 type FormState = {
     nome: string;
@@ -27,10 +29,23 @@ export default function SignupForm() {
     const [error, setError] = useState("");
     const [ok, setOk] = useState("");
     const [loading, setLoading] = useState(false);
+    const toast = useToast();
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
-        setValues((v) => ({ ...v, [name]: type === "checkbox" ? checked : value }));
+        let nextValue: string | boolean = value;
+        if (type === "checkbox") {
+            nextValue = checked;
+        } else if (name === "email") {
+            nextValue = sanitizeEmail(value);
+        } else if (name === "telefone") {
+            nextValue = sanitizePhone(value);
+        } else if (name === "cpf") {
+            nextValue = value.replace(/[^0-9.-]/g, "");
+        } else {
+            nextValue = sanitizeText(value);
+        }
+        setValues((v) => ({ ...v, [name]: nextValue }));
     };
 
     const validate = (): string => {
@@ -67,10 +82,12 @@ export default function SignupForm() {
             );
 
             setOk("Cadastro realizado com sucesso! Você já pode acessar sua conta.");
+            toast.success("Cadastro concluído. Faça login para acessar.");
             setValues(INITIAL);
         } catch (err) {
             console.error("Erro ao cadastrar usuário", err);
             setError("Não foi possível concluir o cadastro. Verifique os dados e tente novamente.");
+            toast.error("Erro ao cadastrar. Tente novamente.");
         } finally {
             setLoading(false);
         }

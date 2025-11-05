@@ -30,10 +30,9 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import AddIcon from "@mui/icons-material/Add";
 import type { User, UserRole } from "../../../types";
 import { useAdminData } from "../AdminDataProvider";
-import { formatCurrency, formatDateTime } from "../../../utils/formatters";
+import { formatDateTime } from "../../../utils/formatters";
 import api from "../../../services/api";
 
 const ROLE_LABEL: Record<UserRole, string> = {
@@ -48,7 +47,6 @@ interface UserFormState {
     cpf: string;
     senha: string;
     role: UserRole;
-    saldo: number;
 }
 
 const INITIAL_STATE: UserFormState = {
@@ -58,7 +56,6 @@ const INITIAL_STATE: UserFormState = {
     cpf: "",
     senha: "",
     role: "CLIENTE",
-    saldo: 0,
 };
 
 export default function AdminUsersSection() {
@@ -85,22 +82,16 @@ export default function AdminUsersSection() {
         [safeUsers],
     );
 
-    const openDialog = (user?: User) => {
-        if (user) {
-            setEditing(user);
-            setForm({
-                nome: user.nome ?? "",
-                email: user.email ?? "",
-                telefone: user.telefone ?? "",
-                cpf: user.cpf ?? "",
-                senha: "",
-                role: (user.role ?? "CLIENTE") as UserRole,
-                saldo: typeof user.saldo === "number" && Number.isFinite(user.saldo) ? user.saldo : 0,
-            });
-        } else {
-            setEditing(null);
-            setForm(INITIAL_STATE);
-        }
+    const openEditDialog = (user: User) => {
+        setEditing(user);
+        setForm({
+            nome: user.nome ?? "",
+            email: user.email ?? "",
+            telefone: user.telefone ?? "",
+            cpf: user.cpf ?? "",
+            senha: "",
+            role: (user.role ?? "CLIENTE") as UserRole,
+        });
         setActionError(undefined);
         setOpen(true);
     };
@@ -116,11 +107,10 @@ export default function AdminUsersSection() {
     };
 
     const handleSubmit = async () => {
+        if (!editing) return;
         setSubmitting(true);
         setActionError(undefined);
         setListError(undefined);
-
-        const saldoValue = Number.isFinite(form.saldo) ? form.saldo : 0;
 
         const basePayload = {
             nome: form.nome.trim(),
@@ -128,30 +118,15 @@ export default function AdminUsersSection() {
             telefone: form.telefone.trim() || undefined,
             cpf: form.cpf.trim() || undefined,
             role: form.role,
-            saldo: saldoValue,
         };
 
         try {
-            if (editing) {
-                const { data: updated } = await api.post<User>("/user/update", {
-                    uuid: editing.uuid,
-                    ...basePayload,
-                    senha: form.senha ? form.senha : undefined,
-                });
-                setUsers(safeUsers.map((user) => (user.uuid === updated.uuid ? updated : user)));
-            } else {
-                if (!form.senha.trim()) {
-                    setActionError("Informe uma senha temporária para o novo usuário.");
-                    setSubmitting(false);
-                    return;
-                }
-                const { data: created } = await api.post<User>("/user/criar", {
-                    ...basePayload,
-                    senha: form.senha,
-                });
-                setUsers([...safeUsers, created]);
-            }
-
+            const { data: updated } = await api.post<User>("/user/update", {
+                uuid: editing.uuid,
+                ...basePayload,
+                senha: form.senha ? form.senha : undefined,
+            });
+            setUsers(safeUsers.map((user) => (user.uuid === updated.uuid ? updated : user)));
             setOpen(false);
             setEditing(null);
             setForm(INITIAL_STATE);
@@ -194,12 +169,7 @@ export default function AdminUsersSection() {
             )}
 
             <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: "12px" }}>
-                <Stack
-                    direction={{ xs: "column", md: "row" }}
-                    spacing={2}
-                    justifyContent="space-between"
-                    alignItems={{ xs: "stretch", md: "center" }}
-                >
+                <Stack direction="column" spacing={0.5}>
                     <Stack spacing={0.5}>
                         <Typography variant="h6" fontWeight={800}>
                             Usuários cadastrados
@@ -208,14 +178,6 @@ export default function AdminUsersSection() {
                             Gerencie acesso de clientes e administradores da plataforma.
                         </Typography>
                     </Stack>
-                    <Button
-                        onClick={() => openDialog()}
-                        startIcon={<AddIcon />}
-                        variant="contained"
-                        size="large"
-                    >
-                        Novo usuário
-                    </Button>
                 </Stack>
             </Paper>
 
@@ -281,14 +243,6 @@ export default function AdminUsersSection() {
                                                     </Stack>
                                                     <Stack direction="row" spacing={1} alignItems="center">
                                                         <Typography variant="body2" color="text.secondary">
-                                                            Saldo:
-                                                        </Typography>
-                                                        <Typography variant="body2">
-                                                            {formatCurrency(user.saldo ?? 0)}
-                                                        </Typography>
-                                                    </Stack>
-                                                    <Stack direction="row" spacing={1} alignItems="center">
-                                                        <Typography variant="body2" color="text.secondary">
                                                             Criado em:
                                                         </Typography>
                                                         <Typography variant="body2">
@@ -301,7 +255,7 @@ export default function AdminUsersSection() {
                                                 <IconButton
                                                     color="primary"
                                                     size="small"
-                                                    onClick={() => openDialog(user)}
+                                                    onClick={() => openEditDialog(user)}
                                                 >
                                                     <EditIcon fontSize="small" />
                                                 </IconButton>
@@ -328,7 +282,6 @@ export default function AdminUsersSection() {
                                     <TableCell>Email</TableCell>
                                     <TableCell>Telefone</TableCell>
                                     <TableCell>Perfil</TableCell>
-                                    <TableCell>Saldo</TableCell>
                                     <TableCell>Criado em</TableCell>
                                     <TableCell align="right">Ações</TableCell>
                                 </TableRow>
@@ -336,7 +289,7 @@ export default function AdminUsersSection() {
                             <TableBody>
                                 {sortedUsers.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7}>
+                                        <TableCell colSpan={6}>
                                             <Typography variant="body2" color="text.secondary">
                                                 Nenhum usuário cadastrado até o momento.
                                             </Typography>
@@ -366,10 +319,9 @@ export default function AdminUsersSection() {
                                                         size="small"
                                                     />
                                                 </TableCell>
-                                                <TableCell>{formatCurrency(user.saldo ?? 0)}</TableCell>
                                                 <TableCell>{formatDateTime(user.createdAt)}</TableCell>
                                                 <TableCell align="right">
-                                                    <IconButton color="primary" onClick={() => openDialog(user)}>
+                                                    <IconButton color="primary" onClick={() => openEditDialog(user)}>
                                                         <EditIcon />
                                                     </IconButton>
                                                     <IconButton color="error" onClick={() => handleDelete(user.uuid)}>
@@ -386,8 +338,8 @@ export default function AdminUsersSection() {
                 )}
             </Paper>
 
-            <Dialog open={open} onClose={closeDialog} maxWidth="sm" fullWidth>
-                <DialogTitle>{editing ? "Editar usuário" : "Novo usuário"}</DialogTitle>
+            <Dialog open={open && Boolean(editing)} onClose={closeDialog} maxWidth="sm" fullWidth>
+                <DialogTitle>Editar usuário</DialogTitle>
                 <DialogContent dividers>
                     <Grid container spacing={2}>
                         <Grid item xs={12}>
@@ -439,33 +391,14 @@ export default function AdminUsersSection() {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Saldo"
-                                type="number"
-                                inputProps={{ step: 0.01 }}
-                                value={form.saldo}
-                                onChange={(e) => {
-                                    const parsed = Number(e.target.value);
-                                    handleChange("saldo", Number.isNaN(parsed) ? 0 : parsed);
-                                }}
-                                fullWidth
-                                required
-                            />
-                        </Grid>
                         <Grid item xs={12}>
                             <TextField
-                                label={editing ? "Nova senha (opcional)" : "Senha temporária"}
+                                label="Nova senha (opcional)"
                                 type="password"
                                 value={form.senha}
                                 onChange={(e) => handleChange("senha", e.target.value)}
-                                helperText={
-                                    editing
-                                        ? "Preencha para redefinir a senha do usuário."
-                                        : "O usuário poderá alterar a senha após o primeiro acesso."
-                                }
+                                helperText="Preencha para redefinir a senha do usuário. Deixe em branco para manter a atual."
                                 fullWidth
-                                required={!editing}
                             />
                         </Grid>
                     </Grid>
@@ -481,7 +414,7 @@ export default function AdminUsersSection() {
                         Cancelar
                     </Button>
                     <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
-                        {submitting ? "Salvando..." : editing ? "Atualizar usuário" : "Criar usuário"}
+                        {submitting ? "Salvando..." : "Salvar alterações"}
                     </Button>
                 </DialogActions>
             </Dialog>
